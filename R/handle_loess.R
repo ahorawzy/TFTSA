@@ -1,6 +1,6 @@
 #' Caculate LOESS value from a dataframe.
 #'
-#' This function caculates LOESS(locally weighted regression) by given a dataframe.
+#' This function caculates LOESS (locally weighted regression) by given a dataframe.
 #'
 #' LOESS (locally weighted regression) is a technique which can smooth a series. It
 #' needs a explaining variable as exp, a response variable as resp, a parameter span.

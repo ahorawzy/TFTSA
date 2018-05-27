@@ -9,16 +9,14 @@ handle_loess(df, exp, resp, sp)
 \arguments{
 \item{df}{The dataFrame contains series to be loess.}
 
-\item{exp}{The sequence column number of explaining variable,
-which is a column of df.}
+\item{exp}{The sequence column number of explaining variable.}
 
-\item{resp}{The sequence column number of response variable,
-which is another column of df.}
+\item{resp}{The sequence column number of response variable.}
 
 \item{sp}{Span parameter of loess() function.}
 }
 \description{
-This function caculates LOESS(locally weighted regression) by given a dataframe.
+This function caculates LOESS (locally weighted regression) by given a dataframe.
 }
 \details{
 LOESS (locally weighted regression) is a technique which can smooth a series. It
