@@ -1,3 +1,4 @@
+#' @export
 flowknn <- function(obj,base,start,k,lag_duration,fore_duration){
 
   ld = lag_duration
@@ -22,7 +23,7 @@ flowknn <- function(obj,base,start,k,lag_duration,fore_duration){
     bwin = fl + fd - 1
 
     knnames = names(sort(as.matrix(dist(flowall[,fwin:fl-1]))[,1]))[2:(2+k-1)]
-    cat("预测区间为",fl,"到",bwin,"所选近邻为",knnames,"\n")
+    cat("predicting window is from",fl,"to",bwin,"and near neighbour are",knnames,"\n")
 
     kn = base[knnames,fl:bwin]
     foreflow[,fl:bwin] = colMeans(kn)
