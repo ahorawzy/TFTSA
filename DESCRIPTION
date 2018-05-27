@@ -9,3 +9,4 @@ Description: This package is designed for traffic flow time series analysis
 License: GPL
 Encoding: UTF-8
 LazyData: true
+Imports: reshape2
