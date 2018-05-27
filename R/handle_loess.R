@@ -10,10 +10,8 @@
 #' @seealso \code{\link[stats]{loess}}
 #'
 #' @param df The dataFrame contains series to be loess.
-#' @param exp The sequence column number of explaining variable,
-#' which is a column of df.
-#' @param resp The sequence column number of response variable,
-#' which is another column of df.
+#' @param exp The sequence column number of explaining variable.
+#' @param resp The sequence column number of response variable.
 #' @param sp Span parameter of loess() function.
 #' @export
 
