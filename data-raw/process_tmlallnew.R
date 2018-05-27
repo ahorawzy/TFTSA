@@ -23,3 +23,6 @@ tmlzzloess <- tmlzzloess[,-1]
 
 # check the completeness of tmlzzloess
 sum(is.na(tmlzzloess))
+
+# write tmlzzloess to data-raw/
+write.csv(tmlzzloess,file="data-raw/tmlzzloess.csv",row.names = F)
