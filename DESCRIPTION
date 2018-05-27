@@ -1,0 +1,11 @@
+Package: TFTSA
+Type: Package
+Title: Traffic Flow Time Series Analysis
+Version: 0.1.0
+Author@R: person("ZhiYuan","Wang",email="lzyz09193@163.com",role=c("aut","cre"))
+Description: This package is designed for traffic flow time series analysis 
+    and visualization. It contains useful functions about preprocessing, clustering, 
+    and predicting traffic flow data.
+License: GPL
+Encoding: UTF-8
+LazyData: true
