@@ -1,5 +1,8 @@
 # scripts for processing tmlallnew
 
+# read tmlallnew
+tmlallnew <- read.csv("data-raw/tmlallnew.csv")
+
 # select fields
 tmlallnew <- tmlallnew[,c(1,2,3)]
 
@@ -25,4 +28,4 @@ tmlzzloess <- tmlzzloess[,-1]
 sum(is.na(tmlzzloess))
 
 # write tmlzzloess to data-raw/
-write.csv(tmlzzloess,file="data-raw/tmlzzloess.csv",row.names = F)
+write.csv(tmlzzloess,file="data-raw/tmlzzloess.csv")
