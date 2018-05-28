@@ -28,5 +28,5 @@ of forecast. This function use ggplot2 to make the plot more elegant.
 }
 
 \seealso{
-\code{\link[ggplot2]{ggplot}}
+\code{\link[ggplot2]{ggplot2-package}}
 }

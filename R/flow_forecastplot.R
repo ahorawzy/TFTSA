@@ -11,7 +11,7 @@
 #'     \item the forecast value of traffic flow, marked as red line;
 #' }
 #'
-#' @seealso \code{\link[ggplot2]{ggplot}}
+#' @seealso \code{\link[ggplot2]{ggplot2-package}}
 #'
 #' @param rv real value of traffic flow, a row from a dataframe;
 #' @param pv forecast value, can be the return value of flow_knn function,
