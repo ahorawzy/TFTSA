@@ -27,7 +27,7 @@ tmlobj <- tmlzznew[6,]
 tmlbase <- tmlzznew[-6,]
 
 ## 2.2 execute flowknn function
-pre1006 <- flowknn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12)
+pre1006 <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12)
 
 ## 2.3 present outcome
 plot(1:288,pre1006,type="l",col="red")
