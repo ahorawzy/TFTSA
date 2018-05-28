@@ -48,17 +48,11 @@ pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,for
 不必要的波动很大，这种微小波动可能没用。
 
 ```{r}
-tml1006both <- rbind(tmlobj,pre1006)
-tml1006both <- t(tml1006both)
-tml1006both <- as.data.frame(tml1006both)
+flow_forecastplot(tmlobj,pre1006)
 ```
 
 ```{r}
-ggplot(tml1006both,aes(1:288,tml1006both$`06-10月-16`))+geom_point(colour="steelblue")+
-  geom_line(aes(1:288,tml1006both$`06-10月-161`),colour="red",size=1)+
-  xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")+
-  scale_x_continuous(breaks = seq(0,288,24))+
-  scale_y_continuous(breaks = seq(0,120,20))
+flow_evaluate(tmlobj,pre1006)
 ```
 
 
@@ -74,20 +68,14 @@ tmlbase <- tmlzzloess[-6,]
 pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12)
 ```
 
-
 ```{r}
-tml1006both <- rbind(tmlobj,pre1006)
-tml1006both <- t(tml1006both)
-tml1006both <- as.data.frame(tml1006both)
+flow_forecastplot(tmlobj,pre1006)
 ```
 
 ```{r}
-ggplot(tml1006both,aes(1:288,tml1006both$`06-10月-16`))+geom_point(colour="steelblue")+
-  geom_line(aes(1:288,tml1006both$`06-10月-161`),colour="red",size=1)+
-  xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")+
-  scale_x_continuous(breaks = seq(0,288,24))+
-  scale_y_continuous(breaks = seq(0,120,20))
+flow_evaluate(tmlobj,pre1006)
 ```
+
 
 可以看到除了不光滑外，预测效果整体良好。就是对于高峰值预测偏低。
 
@@ -133,6 +121,10 @@ pre1006_k5 <- flow_knn(tmlobj,tmlbase,start = 73,k = 5,lag_duration = 24,fore_du
 flow_forecastplot(tmlobj,pre1006_k5)
 ```
 
+```{r}
+flow_evaluate(tmlobj,pre1006_k5)
+```
+
 
 ### 4.2 关于lag_duration的灵敏度分析
 
@@ -146,6 +138,11 @@ pre1006_ld36 <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 36,fore_
 flow_forecastplot(tmlobj,pre1006_ld36)
 ```
 
+```{r}
+flow_evaluate(tmlobj,pre1006_ld36)
+```
+
+
 #### 4.2.2 ld48
 
 ```{r}
@@ -155,6 +152,11 @@ pre1006_ld48 <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_
 ```{r}
 flow_forecastplot(tmlobj,pre1006_ld48)
 ```
+
+```{r}
+flow_evaluate(tmlobj,pre1006_ld48)
+```
+
 
 ### 4.3 关于fore_duration的灵敏度分析
 
@@ -168,6 +170,11 @@ pre1006_fd6 <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_d
 flow_forecastplot(tmlobj,pre1006_fd6)
 ```
 
+```{r}
+flow_evaluate(tmlobj,pre1006_fd6)
+```
+
+
 #### 4.3.2 fd4
 
 ```{r}
@@ -178,6 +185,11 @@ pre1006_fd4 <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_d
 flow_forecastplot(tmlobj,pre1006_fd4)
 ```
 
+```{r}
+flow_evaluate(tmlobj,pre1006_fd4)
+```
+
+
 #### 4.3.3 fd2
 
 ```{r}
@@ -186,5 +198,9 @@ pre1006_fd2 <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_d
 
 ```{r}
 flow_forecastplot(tmlobj,pre1006_fd2)
+```
+
+```{r}
+flow_evaluate(tmlobj,pre1006_fd2)
 ```
 
