@@ -49,9 +49,10 @@
 #' @param k The number of nearest neighbours.
 #' @param lag_duration The time window to determine the similarity between flows.
 #' @param fore_duration The time window to make prediction.
+#' @param cat If cat=1, it will print the detail information about neighbours each time.
 #' @export
 #'
-flow_knn <- function(obj,base,start,k,lag_duration,fore_duration){
+flow_knn <- function(obj,base,start,k,lag_duration,fore_duration,cat=0){
 
   ld = lag_duration
   fd = fore_duration
@@ -75,7 +76,9 @@ flow_knn <- function(obj,base,start,k,lag_duration,fore_duration){
     bwin = fl + fd - 1
 
     knnames = names(sort(as.matrix(dist(flowall[,fwin:fl-1]))[,1]))[2:(2+k-1)]
-    cat("predicting window is from",fl,"to",bwin,"and near neighbour are",knnames,"\n")
+    if (cat==1) {
+      cat("predicting window is from",fl,"to",bwin,"and near neighbour are",knnames,"\n")
+    }
 
     kn = base[knnames,fl:bwin]
     foreflow[,fl:bwin] = colMeans(kn)
