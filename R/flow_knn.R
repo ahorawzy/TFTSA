@@ -50,8 +50,8 @@
 #' @param lag_duration The time window to determine the similarity between flows.
 #' @param fore_duration The time window to make prediction.
 #' @param cat If cat=1, it will print the detail information about neighbours each time.
-#' @param save_detail Default is FALSE. If it's set to a string of path, selected neighbours
-#' of each time will be saved in a .csv file in the given path.
+#' @param save_detail Default is FALSE. If it's set to a string filename with path,
+#' selected neighbours of each time will be saved in a .csv file in the given path.
 #' @export
 #'
 flow_knn <- function(obj,base,start,k,lag_duration,fore_duration,cat=FALSE,save_detail=FALSE){
@@ -85,18 +85,18 @@ flow_knn <- function(obj,base,start,k,lag_duration,fore_duration,cat=FALSE,save_
       cat("predicting window is from",fl,"to",bwin,"and near neighbour are",knnames,"\n")
     }
     if (is.character(save_detail)){
-      detail[fl:bwin,1] <- fl
-      detail[fl:bwin,2] <- bwin
-      detail[fl:bwin,3] <- paste(knnames,collapse = "   ")
+      detail[fl,1] <- fl
+      detail[fl,2] <- bwin
+      detail[fl,3] <- paste(knnames,collapse = "   ")
     }
 
     kn = base[knnames,fl:bwin]
     foreflow[,fl:bwin] = colMeans(kn)
-
     fl = bwin+1
   }
   if (is.character(save_detail)){
-    write.csv(detail,file=paste(save_detail,"count_details.csv"))
+    detail <- na.omit(detail)
+    write.csv(detail,file=save_detail,row.names = F)
   }
   return(foreflow)
 }

@@ -22,8 +22,8 @@ flow_knn(obj, base, start, k, lag_duration, fore_duration, cat = FALSE,
 
 \item{cat}{If cat=1, it will print the detail information about neighbours each time.}
 
-\item{save_detail}{Default is FALSE. If it's set to a string of path, selected neighbours
-of each time will be saved in a .csv file in the given path.}
+\item{save_detail}{Default is FALSE. If it's set to a string filename with path,
+selected neighbours of each time will be saved in a .csv file in the given path.}
 }
 \description{
 This function makes flexible prediction of traffic flow
