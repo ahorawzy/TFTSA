@@ -4,7 +4,8 @@
 \alias{flow_knn}
 \title{Make prediction using KNN method.}
 \usage{
-flow_knn(obj, base, start, k, lag_duration, fore_duration, cat = 0)
+flow_knn(obj, base, start, k, lag_duration, fore_duration, cat = FALSE,
+  save_detail = FALSE)
 }
 \arguments{
 \item{obj}{The object flow to be predicted, a row from a dataframe.}
@@ -20,6 +21,9 @@ flow_knn(obj, base, start, k, lag_duration, fore_duration, cat = 0)
 \item{fore_duration}{The time window to make prediction.}
 
 \item{cat}{If cat=1, it will print the detail information about neighbours each time.}
+
+\item{save_detail}{Default is FALSE. If it's set to a string of path, selected neighbours
+of each time will be saved in a .csv file in the given path.}
 }
 \description{
 This function makes flexible prediction of traffic flow

@@ -50,9 +50,11 @@
 #' @param lag_duration The time window to determine the similarity between flows.
 #' @param fore_duration The time window to make prediction.
 #' @param cat If cat=1, it will print the detail information about neighbours each time.
+#' @param save_detail Default is FALSE. If it's set to a string of path, selected neighbours
+#' of each time will be saved in a .csv file in the given path.
 #' @export
 #'
-flow_knn <- function(obj,base,start,k,lag_duration,fore_duration,cat=0){
+flow_knn <- function(obj,base,start,k,lag_duration,fore_duration,cat=FALSE,save_detail=FALSE){
 
   ld = lag_duration
   fd = fore_duration
@@ -60,6 +62,9 @@ flow_knn <- function(obj,base,start,k,lag_duration,fore_duration,cat=0){
 
   foreflow = obj
   foreflow[,] <- 0
+
+  detail <- data.frame(matrix(NA,ncol(obj),3))
+  names(detail) <- c("start","to","neighbours")
 
   foreflow[,1:st] = obj[,1:st]
 
@@ -76,14 +81,22 @@ flow_knn <- function(obj,base,start,k,lag_duration,fore_duration,cat=0){
     bwin = fl + fd - 1
 
     knnames = names(sort(as.matrix(dist(flowall[,fwin:fl-1]))[,1]))[2:(2+k-1)]
-    if (cat==1) {
+    if (cat==TRUE) {
       cat("predicting window is from",fl,"to",bwin,"and near neighbour are",knnames,"\n")
+    }
+    if (is.character(save_detail)){
+      detail[fl:bwin,1] <- fl
+      detail[fl:bwin,2] <- bwin
+      detail[fl:bwin,3] <- paste(knnames,collapse = "   ")
     }
 
     kn = base[knnames,fl:bwin]
     foreflow[,fl:bwin] = colMeans(kn)
 
     fl = bwin+1
+  }
+  if (is.character(save_detail)){
+    write.csv(detail,file=paste(save_detail,"count_details.csv"))
   }
   return(foreflow)
 }
