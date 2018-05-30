@@ -4,7 +4,7 @@
 \alias{flow_evaluate}
 \title{Evaluate the forecast result.}
 \usage{
-flow_evaluate(rv, pv, method = "mse")
+flow_evaluate(rv, pv, method = "all")
 }
 \arguments{
 \item{rv}{real value of traffic flow, a row from a dataframe;}
@@ -12,7 +12,7 @@ flow_evaluate(rv, pv, method = "mse")
 \item{pv}{forecast value, can be the return value of flow_knn function,
 a row from a dataframe;}
 
-\item{method}{can be "mse", "rmse" or "mae"}
+\item{method}{can be "mse", "rmse", "mae" or "all"}
 }
 \description{
 This function evaluates the forecast result in several evaluation criterions.
