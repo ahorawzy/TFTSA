@@ -52,9 +52,12 @@
 #' @param cat If cat=1, it will print the detail information about neighbours each time.
 #' @param save_detail Default is FALSE. If it's set to a string filename with path,
 #' selected neighbours of each time will be saved in a .csv file in the given path.
+#' @param imbalance Default is FALSE. If it's set to be True, it will use dist_imbalance()
+#' to caculate distance.
 #' @export
 #'
-flow_knn <- function(obj,base,start,k,lag_duration,fore_duration,cat=FALSE,save_detail=FALSE){
+flow_knn <- function(obj,base,start,k,lag_duration,fore_duration,
+                     cat=FALSE,save_detail=FALSE,imbalance=FALSE){
 
   ld = lag_duration
   fd = fore_duration
@@ -70,17 +73,25 @@ flow_knn <- function(obj,base,start,k,lag_duration,fore_duration,cat=FALSE,save_
 
   fl = st
 
-  obj = as.matrix(obj)
-  base = as.matrix(base)
-
   flowall = rbind(obj,base)
 
   while(fl<(ncol(obj)-1)){
+    obj = as.matrix(obj)
+    base = as.matrix(base)
 
     fwin = fl - ld
     bwin = fl + fd - 1
 
-    knnames = names(sort(as.matrix(dist(flowall[,fwin:fl-1]))[,1]))[2:(2+k-1)]
+    if(imbalance == FALSE){
+      knnames = names(sort(as.matrix(dist(flowall[,fwin:fl-1]))[,1]))[2:(2+k-1)]
+    }else if(imbalance == TRUE){
+      obj <- as.data.frame(obj)
+      d <- dist_imbalance(obj[,fwin:fl-1],base[,fwin:fl-1])
+      knnames = names(d[order(d),][1:k])
+    }else{
+      stop("imbalance must be logical")
+    }
+
     if (cat==TRUE) {
       cat("predicting window is from",fl,"to",bwin,"and near neighbour are",knnames,"\n")
     }

@@ -5,7 +5,7 @@
 \title{Make prediction using KNN method.}
 \usage{
 flow_knn(obj, base, start, k, lag_duration, fore_duration, cat = FALSE,
-  save_detail = FALSE)
+  save_detail = FALSE, imbalance = FALSE)
 }
 \arguments{
 \item{obj}{The object flow to be predicted, a row from a dataframe.}
@@ -24,6 +24,9 @@ flow_knn(obj, base, start, k, lag_duration, fore_duration, cat = FALSE,
 
 \item{save_detail}{Default is FALSE. If it's set to a string filename with path,
 selected neighbours of each time will be saved in a .csv file in the given path.}
+
+\item{imbalance}{Default is FALSE. If it's set to be True, it will use dist_imbalance()
+to caculate distance.}
 }
 \description{
 This function makes flexible prediction of traffic flow
