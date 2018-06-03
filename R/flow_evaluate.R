@@ -9,12 +9,14 @@
 #' @export
 flow_evaluate <- function(rv,pv,method="all"){
   n <- length(rv)
-  mse <- 1/n*sum((rv-pv)**2)
-  rmse <- sqrt(1/n*sum((rv-pv)**2))
-  mae <- 1/n*sum(abs(rv-pv))
+  z <- rv-pv
+  mse <- 1/n*sum(z^2)
+  rmse <- sqrt(1/n*sum(z^2))
+  mae <- 1/n*sum(abs(z))
+  imse <- 1/n*sum(ifelse(z>0,1.5,0.5)*z^2)
 
   if(method == "all"){
-    result <- data.frame(mse,rmse,mae)
+    result <- data.frame(mse,rmse,mae,imse)
   } else if(method == "mse"){
     result <- mse
   } else if(method == "rmse"){
