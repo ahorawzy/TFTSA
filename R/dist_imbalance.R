@@ -1,4 +1,4 @@
-#бо Imbalance distance caculation
+#' Imbalance distance caculation
 #'
 #' This functions help function knn_flow() use imbalance distance in caculating similarity
 #' among traffic flows.
