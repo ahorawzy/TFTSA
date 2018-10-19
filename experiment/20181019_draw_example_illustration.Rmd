@@ -1,0 +1,15 @@
+---
+title: "20181019_draw_example_illustration"
+author: "wzy"
+date: "2018Äê10ÔÂ19ÈÕ"
+output: html_document
+---
+
+```{r}
+rm(list=ls())
+load("D:\\R\\packages\\TFTSA\\data-raw\\tmlzznew.RData")
+load("D:\\R\\packages\\TFTSA\\data-raw\\tmlzzloess.RData")
+```
+
+
+
