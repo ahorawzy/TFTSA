@@ -6,10 +6,33 @@ output: html_document
 ---
 
 ```{r}
+library(TFTSA)
+library(reshape2)
+library(ggplot2)
+library(dplyr)
+```
+
+
+```{r}
 rm(list=ls())
 load("D:\\R\\packages\\TFTSA\\data-raw\\tmlzznew.RData")
 load("D:\\R\\packages\\TFTSA\\data-raw\\tmlzzloess.RData")
 ```
 
+```{r}
+colnames(tmlzzloess) <- 1:288
+```
 
+```{r}
+tmlzzloess$day <- rownames(tmlzzloess)
+```
+
+
+```{r}
+x <- melt(tmlzzloess,id.vars = "day") %>% arrange(day)
+```
+
+```{r}
+ggplot(x,aes(variable,value,group=day,colour=day))+geom_point()+geom_line()
+```
 
