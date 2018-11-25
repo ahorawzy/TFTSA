@@ -1,0 +1,344 @@
+---
+title: "20171218_10月1日数据的BoxJenkins交通流特性分析"
+author: "王致远"
+date: "2017年12月18日"
+output: html_document
+---
+
+```{r warning=FALSE}
+library(TSA)
+library(ggplot2)
+library(forecast)
+```
+
+
+在上一次实验中，整理了10月1日当天的交通流数据，换算了机动车当量的交通流量，绘制了点画线图，并使用LOESS方法对数据进行平滑，取span=0.1，平滑后的数据放入了数据集并保存为"D:\\data\\thesis\\201610\\tmldata\\tml1001_2.csv"。
+
+今天数据分析的任务是使用Box-Jenkins方法对LOESS平滑后的数据建模，并使用ARIMA方法预测。
+
+## 读取数据
+
+```{r}
+tml1001 <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tml1001_2.csv",header = T)
+dim(tml1001)
+```
+
+```{r}
+names(tml1001)
+```
+
+比较重要的只有两列：时间序号和LOESS。
+
+点画线图
+
+```{r}
+plot(tml1001$时间序号,tml1001$LOESS,type='l')
+```
+
+可以看出span=0.1起到了平滑效果，并且保留了一定的局部细节。
+
+## 数据初探
+
+### LOESS的自相关性初探
+
+查看数据与一阶滞后项的关系
+
+```{r}
+plot(x=zlag(tml1001$LOESS),y=tml1001$LOESS)
+```
+
+出现一些问题，LOESS后的数据明显有一阶正相关性。
+
+查看其ACF图
+
+```{r}
+acf(tml1001$LOESS)
+```
+
+ACF图简直看不成。
+
+查看其PACF图
+
+```{r}
+pacf(tml1001$LOESS)
+```
+
+显然是AR过程，至少是AR(1)，可能是AR(2)或AR(3).
+
+### 原始数据的自相关性初探
+
+```{r}
+plot(x=zlag(tml1001$机动车当量),y=tml1001$机动车当量)
+```
+
+原数据集虽然有一阶正相关性，但没有那么强。
+
+查看其ACF图和PACF图
+
+```{r}
+acf(tml1001$机动车当量)
+```
+
+```{r}
+pacf(tml1001$机动车当量)
+```
+
+也是AR过程，但阶数更高。
+
+### 差分后序列的形态
+
+```{r}
+plot(tml1001$时间序号[2:288],diff(tml1001$LOESS),type = 'p')
+```
+
+### 序列平稳性检验
+
+**原假设：非平稳；备择假设：平稳**
+
+```{r}
+adf.test(tml1001$LOESS)
+```
+
+接受原假设：序列非平稳。
+
+```{r}
+adf.test(diff(tml1001$LOESS))
+```
+
+一阶差分后序列平稳。
+
+### 对一阶差分后的序列重新做ACF和PACF
+
+```{r}
+acf(diff(tml1001$LOESS))
+```
+
+```{r}
+pacf(diff(tml1001$LOESS))
+```
+
+差分后的PACF图跟差分前的PACF有所不同。
+
+## 实验一：针对LOESS后数据
+
+### 模型识别（1）
+
+#### EACF
+
+```{r}
+eacf(diff(tml1001$LOESS))
+```
+
+大致为ARIMA(1,1,2)模型
+
+#### 自动识别
+
+使用forecast包的auto.arima尝试自动识别
+
+```{r}
+fit1 <- auto.arima(diff(tml1001$LOESS))
+fit1
+```
+
+自动检验给出的建议是ARIMA(2,1,1)
+
+#### 子集ARMA选择
+
+```{r}
+res1 <- armasubsets(y=diff(tml1001$LOESS),nar=14,nma = 14,y.name='test',ar.method = "ols")
+plot(res1)
+```
+
+子集ARMA识别给出的建议比较乱，可以选AR(3)或AR(2).
+
+#### 总结
+
+备选择模型有以下几个：
+
+- ARIMA(1,1,2);
+- ARIMA(2,1,1);
+- ARIMA(3,1,0);
+- ARIMA(2,1,0);
+
+### 参数估计（1）
+
+使用arima函数估计参数
+
+```{r}
+model1 <- arima(tml1001$LOESS,order=c(1,1,2),method="ML")
+model1
+```
+
+```{r}
+model2 <- arima(tml1001$LOESS,order=c(2,1,1),method="ML")
+model2
+```
+
+```{r}
+model3 <- arima(tml1001$LOESS,order=c(3,1,0),method="ML")
+model3
+```
+
+```{r}
+model4 <- arima(tml1001$LOESS,order=c(2,1,0),method="ML")
+model4
+```
+
+4个模型比较，ARIMA(2,1,1)和ARIMA(1,1,2)的AIC值较高。
+
+由此推理，尝试ARIMA(2,1,2)
+
+```{r}
+model5 <- arima(tml1001$LOESS,order=c(2,1,2),method="ML")
+model5
+```
+
+AIC值更小。
+
+```{r}
+model6 <- arima(tml1001$LOESS,order=c(3,1,2),method="ML")
+model6
+```
+
+AIC值更小。增加p和q的参数，AIC值不再减小。
+
+所以最终模型定为ARIMA(3,1,2)。
+
+```{r}
+model1fit <- fitted(model1)
+model2fit <- fitted(model2)
+model6fit <- fitted(model6)
+```
+
+```{r}
+plot(tml1001$时间序号,tml1001$LOESS,type="l",col="blue")
+lines(tml1001$时间序号,model1fit,col="red",lty=2)
+```
+
+出现了问题，ARIMA模型几乎和LOESS线重叠。
+
+```{r}
+sum(residuals(model1)**2)
+```
+
+哪怕只是model1，误差都非常非常小。
+
+换为原数据查看
+
+```{r}
+plot(tml1001$时间序号,tml1001$机动车当量,type="p",col="blue")
+lines(tml1001$时间序号,model1fit,col="red",lty=1,lwd=2)
+```
+
+ARIMA几乎就相当于平滑了一遍，和LOESS无区别。
+
+## 实验二：针对原数据
+
+### 模型识别（2）
+
+#### EACF
+
+```{r}
+eacf(diff(tml1001$机动车当量))
+```
+
+大致为ARIMA(0,1,1)模型
+
+#### 自动识别
+
+使用forecast包的auto.arima尝试自动识别
+
+```{r}
+fit2 <- auto.arima(diff(tml1001$机动车当量))
+fit2
+```
+
+自动检验给出的建议是ARIMA(0,1,1)
+
+#### 子集ARMA选择
+
+```{r}
+res1 <- armasubsets(y=diff(tml1001$机动车当量),nar=4,nma = 4,y.name='test',ar.method = "ols")
+plot(res1)
+```
+
+子集ARMA识别给出的建议选MA(1).
+
+#### 总结
+
+备选择模型有以下几个：
+
+- ARIMA(1,1,2);
+- ARIMA(0,1,1);
+
+### 参数估计（2）
+
+使用arima函数估计参数
+
+```{r}
+model1 <- arima(tml1001$机动车当量,order=c(1,1,2),method="ML")
+model1
+```
+
+```{r}
+model2 <- arima(tml1001$机动车当量,order=c(0,1,1),method="ML")
+model2
+```
+
+所以最终模型定为ARIMA(0,1,1)。
+
+```{r}
+model2fit <- fitted(model2)
+```
+
+```{r}
+plot(tml1001$时间序号,tml1001$机动车当量,type="p",col="blue")
+lines(tml1001$时间序号,model2fit,col="red",lty=1,lwd=2)
+```
+
+比较能说过去。
+
+```{r}
+ggplot()+geom_point(aes(x=tml1001$时间序号,y=tml1001$机动车当量),color="steelblue")+
+  geom_line(aes(x=tml1001$时间序号,y=model2fit),color="red",size=1)+  
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  xlab("时间序号")+ylab("交通流量")
+```
+
+```{r}
+ggsave(filename = "ARIMA建模拟合图.png",width = 6,height = 4,dpi = 600)
+```
+
+
+```{r}
+sum(residuals(model2)**2)/length(model2fit)
+```
+
+## 实验三：指数平滑预测下一个5min
+
+```{r}
+tmlpre <- HoltWinters(tml1001$机动车当量,gamma=F,beta=F)
+```
+
+```{r}
+plot(tml1001$时间序号, tml1001$机动车当量,type='p')
+lines(tml1001$时间序号[2:288],tmlpre$fitted[,1],lwd=2,col="red")
+```
+
+```{r}
+sum(residuals(tmlpre)**2)/287
+```
+
+```{r}
+ggplot()+geom_point(aes(x=tml1001$时间序号,y=tml1001$机动车当量),color="steelblue")+
+  geom_line(aes(x=tml1001$时间序号[2:288],y=tmlpre$fitted[,1]),color="red",size=1)+  
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  xlab("时间序号")+ylab("交通流量")
+```
+
+```{r}
+ggsave(filename = "指数平滑建模拟合图.png",width = 6,height = 4,dpi = 600)
+```
+

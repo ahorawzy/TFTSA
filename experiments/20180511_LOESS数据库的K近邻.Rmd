@@ -1,0 +1,277 @@
+---
+title: "20180511_LOESS数据库的K近邻"
+author: "wzy"
+date: "2018年5月11日"
+output: html_document
+---
+
+```{r}
+library(reshape2)
+```
+
+
+## LOESS数据库生成
+
+### 读取基础数据
+
+```{r}
+tmlallnew <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlallnew.csv",header=T)
+dim(tmlallnew)
+```
+
+```{r}
+names(tmlallnew)
+```
+
+```{r}
+tmlallnew <- tmlallnew[,c(8,9,10)]
+names(tmlallnew)
+```
+
+### 处理LOESS
+
+```{r}
+handleloess <- function(df,exp,resp,sp){
+  result <- rep(NA,nrow(df))
+  result <- loess(df[,resp]~df[,exp],span=sp)
+  return(result$fitted)
+}
+```
+
+
+```{r}
+days <- unique(tmlallnew$日期)
+```
+
+
+```{r}
+for (i in days) {
+  tmlallnew[tmlallnew$日期==i,4] <- handleloess(tmlallnew[tmlallnew$日期==i,],exp=2,resp=3,sp=0.2)
+}
+names(tmlallnew)[4] <- "LOESS"
+```
+
+### 负值处理
+
+```{r}
+tmlallnew[tmlallnew$LOESS<0,"LOESS"]
+```
+
+
+```{r}
+tmlallnew[tmlallnew$LOESS<0,"LOESS"] = 0
+```
+
+### 数据转置
+
+```{r}
+tmlallnew <- tmlallnew[,c(1,2,4)]
+names(tmlallnew)
+```
+
+```{r}
+tmlzzloess <- dcast(tmlallnew,tmlallnew$日期~tmlallnew$时间序号)
+rownames(tmlzzloess) <- tmlzzloess[,1]
+tmlzzloess <- tmlzzloess[,-1]
+dim(tmlzzloess)
+```
+
+```{r}
+sum(is.na(tmlzzloess))
+```
+
+## 1006数据实验
+
+### 数据准备
+
+```{r}
+tmlzz <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlzznew.csv",header = T)
+rownames(tmlzz) <- tmlzz[,1]
+tmlzz <- tmlzz[,-1]
+dim(tmlzz)
+```
+
+```{r}
+sum(is.na(tmlzz))
+```
+
+```{r}
+tmlobj <- tmlzz[6,]
+rownames(tmlobj)
+```
+
+```{r}
+tmlbase <- tmlzzloess[-6,]
+rownames(tmlbase)
+```
+
+### 函数准备
+
+```{r}
+flowknn <- function(obj,base,start,k,lag_duration,fore_duration){
+  
+  
+  ld = lag_duration
+  fd = fore_duration
+  st = start
+  
+  
+  foreflow = obj
+  foreflow[,] <- 0
+  
+  
+  foreflow[,1:st] = obj[,1:st]
+  
+  
+  fl = st
+  
+  obj = as.matrix(obj)
+  base = as.matrix(base)
+  
+  flowall = rbind(obj,base)
+  
+  while(fl<(ncol(obj)-1)){
+    
+    
+    fwin = fl - ld
+    bwin = fl + fd - 1
+    
+    
+    knnames = names(sort(as.matrix(dist(flowall[,fwin:fl-1]))[,1]))[2:(2+k-1)]
+    cat("预测区间为",fl,"到",bwin,"所选近邻为",knnames,"\n")
+    
+    
+    kn = base[knnames,fl:bwin]
+    foreflow[,fl:bwin] = colMeans(kn)
+    
+    
+    
+    fl = bwin+1
+  }
+  return(foreflow)
+}
+```
+
+### 算法执行
+
+```{r}
+pre1006 <- flowknn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12)
+pre1006
+```
+
+```{r}
+plot(1:288,pre1006,type="l",col="red")
+points(1:288,tmlobj,col="blue")
+```
+
+### 效果展示
+
+```{r}
+tml1006both <- rbind(tmlobj,pre1006)
+tml1006both <- t(tml1006both)
+tml1006both <- as.data.frame(tml1006both)
+```
+
+```{r}
+ggplot(tml1006both,aes(1:288,tml1006both$`06-10月-16`))+geom_point(colour="steelblue")+
+  geom_line(aes(1:288,tml1006both$`06-10月-161`),colour="red",size=1)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))
+```
+
+### 残差检验
+
+```{r}
+res1006 <- tmlobj[73:288] - pre1006[73:288]
+plot(73:288,res1006)
+abline(h=0)
+```
+
+```{r}
+qqnorm(res1006)
+qqline(res1006)
+```
+
+```{r}
+res1006 <- as.numeric(res1006)
+acf(res1006)
+```
+
+```{r}
+Box.test(res1006)
+```
+
+## 灵敏度分析
+
+### 关于k的灵敏度分析
+
+```{r}
+pre1006_k5 <- flowknn(tmlobj,tmlbase,start = 73,k = 5,lag_duration = 24,fore_duration = 12)
+```
+
+```{r}
+plot(1:288,pre1006_k5,type="l",col="red")
+points(1:288,tmlobj,col="blue")
+```
+
+### 关于lag_duration的灵敏度分析
+
+#### ld36
+
+```{r}
+pre1006_ld36 <- flowknn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 36,fore_duration = 12)
+```
+
+```{r}
+plot(1:288,pre1006_ld36,type="l",col="red")
+points(1:288,tmlobj,col="blue")
+```
+
+#### ld48
+
+```{r}
+pre1006_ld48 <- flowknn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12)
+```
+
+```{r}
+plot(1:288,pre1006_ld48,type="l",col="red")
+points(1:288,tmlobj,col="blue")
+```
+
+
+### 关于fore_duration的灵敏度分析
+
+#### fd6
+
+```{r}
+pre1006_fd6 <- flowknn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 6)
+```
+
+```{r}
+plot(1:288,pre1006_fd6,type="l",col="red")
+points(1:288,tmlobj,col="blue")
+```
+
+#### fd4
+
+```{r}
+pre1006_fd4 <- flowknn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 4)
+```
+
+```{r}
+plot(1:288,pre1006_fd4,type="l",col="red")
+points(1:288,tmlobj,col="blue")
+```
+
+#### fd2
+
+```{r}
+pre1006_fd2 <- flowknn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 2)
+```
+
+```{r}
+plot(1:288,pre1006_fd2,type="l",col="red")
+points(1:288,tmlobj,col="blue")
+```
+

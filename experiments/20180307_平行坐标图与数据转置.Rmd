@@ -1,0 +1,228 @@
+---
+title: "20180307_平行坐标图与数据转置"
+author: "王致远"
+date: "2018年3月7日"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(reshape2)
+```
+
+
+今天实验主要任务有二：
+
+1. 继续画平行坐标图，画到满意为止；
+2. 尝试将数据转置，使时间序号按行横向排列；
+
+## 平行坐标图
+
+读取数据，节假日，非节假日1，非节假日2，非节假日
+
+```{r}
+tmljjr <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmljjr.csv",header = T)
+tmlfjjr <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlfjjr.csv",header = T)
+tmlfjjr1 <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlfjjr1.csv",header = T)
+tmlfjjr2 <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlfjjr2.csv",header = T)
+```
+
+### 节假日
+
+```{r}
+ggplot(tmljjr,aes(tmljjr$时间序号,tmljjr$机动车当量,group=tmljjr$日期,color=tmljjr$日期))+geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")
+```
+
+### 非节假日全
+
+```{r}
+ggplot(tmlfjjr,aes(tmlfjjr$时间序号,tmlfjjr$机动车当量,group=tmlfjjr$日期,color=tmlfjjr$日期))+geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")
+```
+
+### 非节假日1
+
+```{r}
+ggplot(tmlfjjr1,aes(tmlfjjr1$时间序号,tmlfjjr1$机动车当量,group=tmlfjjr1$日期,color=tmlfjjr1$日期))+geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")
+```
+
+
+### 非节假日2
+
+```{r}
+ggplot(tmlfjjr2,aes(tmlfjjr2$时间序号,tmlfjjr2$机动车当量,group=tmlfjjr2$日期,color=tmlfjjr2$日期))+geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")
+```
+
+### 剔除9月30日的非节假日1
+
+貌似9月30日的比较像节假日特征，将其排除再看
+
+```{r}
+tmlfjjr1new <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlfjjr1new.csv",header = T)
+tmlfjjrnew <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlfjjrnew.csv",header = T)
+```
+
+```{r}
+ggplot(tmlfjjr1new,aes(tmlfjjr1new$时间序号,tmlfjjr1new$机动车当量,group=tmlfjjr1new$日期,color=tmlfjjr1new$日期))+geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")
+```
+
+### 剔除9月30日的非节假日全
+
+```{r}
+ggplot(tmlfjjrnew,aes(tmlfjjrnew$时间序号,tmlfjjrnew$机动车当量,group=tmlfjjrnew$日期,color=tmlfjjrnew$日期))+geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\非节假日交通流除930.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+基本可以反映问题了
+
+### 各类的均值线
+
+把剔除了9月30日的节假日和非节假日合并起来，并用一列标识
+
+```{r}
+tmlall <- rbind(tmljjr,tmlfjjrnew)
+tmlall <- tmlall[,-1]
+```
+
+```{r}
+names(tmlall)
+```
+
+```{r}
+tmlall$是否为节假日 <- 0
+unique(tmlall$是否为节假日)
+```
+
+```{r}
+jjr <- unique(tmlall$日期)[1:7]
+jjr <- as.character(jjr)
+jjr
+```
+
+```{r}
+for(i in 1:nrow(tmlall)){
+  for(x in jjr){
+   if(tmlall[i,1]==x){
+    tmlall[i,15]=1 
+    }
+  }
+}
+```
+
+```{r}
+table(tmlall$日期,tmlall$是否为节假日)
+```
+
+```{r}
+tmlall$是否为节假日 <- as.factor(tmlall$是否为节假日)
+```
+
+
+```{r}
+ggplot(tmlall,aes(tmlall$时间序号,tmlall$机动车当量,group=tmlall$日期,color=tmlall$日期))+
+  stat_summary(aes(group=tmlall$是否为节假日,color=tmlall$是否为节假日),fun.y=mean,geom="line")+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("是否为节假日")+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\节假日与非节假日交通流对比.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+## 数据转置尝试
+
+### 数据合并
+
+```{r}
+names(tmlall)
+```
+
+```{r}
+unique(tmlall$日期)
+```
+
+缺少9月30日的，将其补充上
+
+```{r}
+tmlall <- rbind(tmljjr,tmlfjjr)
+tmlall <- tmlall[,-1]
+unique(tmlall$日期)
+```
+
+标识节假日和非节假日，将9月30日归为节假日
+
+```{r}
+jjr <- unique(tmlall$日期)[c(1:7,18)]
+jjr <- as.character(jjr)
+jjr
+```
+
+```{r}
+tmlall$是否为节假日 <- 0
+for(i in 1:nrow(tmlall)){
+  for(x in jjr){
+   if(tmlall[i,1]==x){
+    tmlall[i,15]=1 
+    }
+  }
+}
+table(tmlall$日期,tmlall$是否为节假日)
+```
+
+### 尝试转置数据
+
+```{r}
+names(tmlall)
+```
+
+需要保留的属性有：日期、时间序号、机动车当量
+
+```{r}
+tmlzz <- tmlall[,c(1,4,14)]
+names(tmlzz)
+```
+
+```{r}
+tmlcs <- dcast(tmlzz,tmlzz$日期~tmlzz$时间序号)
+dim(tmlcs)
+```
+
+貌似成功了
+
+```{r}
+names(tmlcs)
+```
+
+是成功了，不过存在一个比较大的问题，原始数据是有缺失的，所以cast后的数据缺失的自动变为0了。
+
+### 寻找缺失模式
+
+理想中，应当以临近值插补到缺失值中，使得每日的数据都是288个。
+
+```{r}
+table(tmlall$日期)
+```
+
+- 完全完整的有1001,1002,1004,1005,1006,1007,0930；
+- 较为完整的有1003,1008,1009,1010,1011,0919,0920,0921,0922,0923,0924,0925,0926,0927；
+- 需要丢弃的有1012,0929；
+
+```{r}
+names(tmlall)
+```
+
+```{r}
+write.csv(tmlall,"D:\\data\\thesis\\201610\\tmldata\\tmlall.csv")
+```
+

@@ -1,0 +1,391 @@
+---
+title: "20171216_10月1日当天交通流探索"
+author: "王致远"
+date: "2017年12月16日"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(reshape2)
+```
+
+在上一次实验中，将”十一“节假日期间的交通流变化用柱状图显示，能够表现出”十一“节假日所带来的交通流突变效应。
+
+本实验重点分析：
+
+1. 节假日某日，2016年9月30日或2016年10月1日，交通流数据特征；
+2. 非节假日某日，2016年9月29日以及之前，交通流数据特征。
+
+## 节假日交通流特征
+
+读取2016年10月1日交通流数据
+
+```{r}
+tml1001 <- read.csv("D://data//thesis/201610/tmldata/tml1001all.csv",header = T)
+dim(tml1001)
+```
+
+数据有288行，似乎是全的。
+
+```{r}
+names(tml1001)
+```
+
+首先整理一下数据，计算当量
+
+```{r warning=FALSE}
+tml1001$机动车当量 <- 1*tml1001$中小客车+1*tml1001$小货车+1.5*tml1001$大客车+1.5*tml1001$中货车+3*tml1001$大货车+
+  4*tml1001$特大货车+4*tml1001$集装箱+1*tml1001$摩托车+4*tml1001$拖拉机
+```
+
+```{r}
+names(tml1001)
+```
+
+```{r}
+tml1001 <- tml1001[,-c(1,16)]
+names(tml1001)
+```
+
+绘制机动车交通流量图
+
+### 点画线图
+
+```{r}
+plot(tml1001$时间序号,tml1001$机动车当量,type="b")
+```
+
+### 折线图
+
+```{r}
+plot(tml1001$时间序号,tml1001$机动车当量,type="l")
+```
+
+### 10月1日
+
+```{r}
+qplot(x = 时间序号,y = 机动车当量,data=tml1001)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  xlab("时间序号")+ylab("车流量")
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\10月1日交通流.jpg",dpi=600)
+```
+
+数据具有很多噪音
+
+尝试使用LOESS技术平滑曲线，span取0.1。
+
+```{r}
+loess1 <- loess(tml1001$机动车当量~tml1001$时间序号,span=0.1)
+plot(tml1001$时间序号,tml1001$机动车当量,type="l")
+lines(tml1001$时间序号,loess1$fit,col="red")
+```
+
+将LOESS平滑后的数据写入数据框，并存起来
+
+```{r}
+tml1001$LOESS <- loess1$fitted
+write.csv(tml1001,file = "D:\\data\\thesis\\201610\\tmldata\\tml1001loess.csv")
+```
+
+### 9月30日
+
+```{r}
+tml0930 <- read.csv("D://data//thesis/201610/tmldata/tml0930all.csv",header = T)
+tml0930 <- tml0930[,-1]
+qplot(x = 时间序号,y = 机动车当量,data=tml0930)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))
+```
+
+```{r}
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\9月30日交通流.jpg",width=9,height=6,dpi=600)
+```
+
+
+### 10月2日
+
+```{r}
+tml1002 <- read.csv("D://data//thesis/201610/tmldata/tml1002all.csv",header = T)
+tml1002 <- tml1002[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml1002)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+```{r}
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\10月2日交通流.jpg",dpi=600)
+```
+
+
+### 10月3日
+
+```{r}
+tml1003 <- read.csv("D://data//thesis/201610/tmldata/tml1003all.csv",header = T)
+tml1003 <- tml1003[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml1003)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+```{r}
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\10月3日交通流.jpg",dpi=600)
+```
+
+### 10月4日
+
+```{r}
+tml1004 <- read.csv("D://data//thesis/201610/tmldata/tml1004all.csv",header = T)
+tml1004 <- tml1004[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml1004)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+```{r}
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\10月4日交通流.jpg",dpi=600)
+```
+
+### 10月5日
+
+```{r}
+tml1005 <- read.csv("D://data//thesis/201610/tmldata/tml1005all.csv",header = T)
+tml1005 <- tml1005[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml1005)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+```{r}
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\10月5日交通流.jpg",dpi=600)
+```
+
+
+### 10月6日
+
+```{r}
+tml1006 <- read.csv("D://data//thesis/201610/tmldata/tml1006all.csv",header = T)
+tml1006 <- tml1006[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml1006)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+```{r}
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\10月6日交通流.jpg",dpi=600)
+```
+
+### 10月7日
+
+```{r}
+tml1007 <- read.csv("D://data//thesis/201610/tmldata/tml1007all.csv",header = T)
+tml1007 <- tml1007[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml1007)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+```{r}
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\10月7日交通流.jpg",dpi=600)
+```
+
+
+## 非节假日交通流特征
+
+### 9月29日
+
+```{r}
+tml0929 <- read.csv("D://data//thesis/201610/tmldata/tml0929all.csv",header = T)
+tml0929 <- tml0929[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml0929)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))
+```
+
+### 9月27日
+
+```{r}
+tml0927 <- read.csv("D://data//thesis/201610/tmldata/tml0927all.csv",header = T)
+tml0927 <- tml0927[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml0927)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+### 9月26日
+
+```{r}
+tml0926 <- read.csv("D://data//thesis/201610/tmldata/tml0926all.csv",header = T)
+tml0926 <- tml0926[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml0926)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+### 9月25日
+
+```{r}
+tml0925 <- read.csv("D://data//thesis/201610/tmldata/tml0925all.csv",header = T)
+tml0925 <- tml0925[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml0925)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+### 9月24日
+
+```{r}
+tml0924 <- read.csv("D://data//thesis/201610/tmldata/tml0924all.csv",header = T)
+tml0924 <- tml0924[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml0924)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+### 9月23日
+
+```{r}
+tml0923 <- read.csv("D://data//thesis/201610/tmldata/tml0923all.csv",header = T)
+tml0923 <- tml0923[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml0923)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+### 9月22日
+
+```{r}
+tml0922 <- read.csv("D://data//thesis/201610/tmldata/tml0922all.csv",header = T)
+tml0922 <- tml0922[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml0922)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+### 9月21日
+
+```{r}
+tml0921 <- read.csv("D://data//thesis/201610/tmldata/tml0921all.csv",header = T)
+tml0921 <- tml0921[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml0921)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+### 9月20日
+
+```{r}
+tml0920 <- read.csv("D://data//thesis/201610/tmldata/tml0920all.csv",header = T)
+tml0920 <- tml0920[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml0920)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+### 9月19日
+
+```{r}
+tml0919 <- read.csv("D://data//thesis/201610/tmldata/tml0919all.csv",header = T)
+tml0919 <- tml0919[,-1]
+
+qplot(x = 时间序号,y = 机动车当量,data=tml0919)+geom_line(color="steelblue")+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  scale_x_continuous(breaks = seq(0,288,24))
+```
+
+## 节假日与非节假日对比
+
+### 试验1
+
+```{r}
+names(tml1001)
+```
+
+```{r}
+tml1001try <- tml1001[,c(4,5,15)]
+names(tml1001try)
+```
+
+```{r}
+tmlmelt <- melt(tml1001try,id="时间序号")
+qplot(tmlmelt$时间序号,tmlmelt$value,data=tmlmelt,color=variable)+
+  facet_grid(variable~.,scales="free_y")
+```
+
+### 试验2
+
+```{r}
+tmlall <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlall.csv",header = T)
+dim(tmlall)
+```
+
+```{r}
+unique(tmlall$日期)
+```
+
+```{r}
+qplot(tmlall$时间序号,tmlall$中小客车,data=tmlall,color=tmlall$日期,geom="line")+
+  facet_grid(tmlall$日期~.,scales="free_y")
+```
+
+图太密了
+
+```{r}
+ggsave("多日图对比2.png",width=20,height=10)
+```
+
+
+### 试验3
+
+```{r}
+unique(tmlall$日期)
+```
+
+
+```{r,fig.width=12,fig.height=8}
+jjr <- unique(tmlall$日期)[1:7]
+tmljjr <- tmlall[tmlall$日期==jjr,]
+(ggplot3 <- qplot(tmljjr$时间序号,tmljjr$中小客车,data=tmljjr,color=tmljjr$日期,geom="line")+
+  facet_grid(tmljjr$日期~.,scales="free_y")+geom_smooth(method = "loess",span=0.1))
+```
+
+
+```{r}
+ggsave("多日图对比.png",width=20,height=10)
+```
+
+

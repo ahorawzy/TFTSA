@@ -1,0 +1,302 @@
+---
+title: "20180322_距离的重新设计"
+author: "wzy"
+date: "2018年3月22日"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(reshape2)
+library(mice)
+library(cluster)
+```
+
+```{r}
+tmlzz <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlzz.csv",header = T)
+rownames(tmlzz) <- tmlzz$X
+tmlzz <- tmlzz[,-1]
+dim(tmlzz)
+```
+
+```{r}
+sum(!complete.cases(tmlzz))
+```
+
+```{r}
+tmlzz[8,232] <- 28.625
+sum(!complete.cases(tmlzz))
+```
+
+```{r}
+days <- rownames(tmlzz)
+days
+```
+
+
+## 欧氏距离（Euclidean Distance）
+
+原来的距离是欧氏距离。
+
+$$d_{ab}=\sqrt{(x_1-x_2)^2+(x_2-y_2)^2+\dots+(x_n-y_n)^2}$$
+
+$$d_{ab}=\sqrt{\sum_{i=1}^n(x_i-y_i)^2}$$
+
+
+```{r}
+fit_hc_euclidean <- hclust(dist(tmlzz))
+plot(fit_hc_euclidean)
+```
+
+
+样本1和样本2的欧式距离检验
+
+```{r}
+distance12 <- sqrt(sum((tmlzz[1,]-tmlzz[2,])**2))
+distance12
+```
+
+验证无误
+
+## 曼哈顿距离（ManhattanDistance）
+
+$$d_{ab}=|x_1-y_1|+|x_2-y_2|+\dots+|x_n-y_n|$$
+
+$$d_{ab}=\sum_{i=1}^n |x_i-y_i|$$
+
+```{r}
+fit_hc_manhattan <- hclust(dist(tmlzz,method = "manhattan"))
+plot(fit_hc_manhattan)
+```
+
+
+## 坎贝拉距离（canberra Distance）
+
+$$d_{ab}=\sum_{i=1}^n \frac{|a_i-b_i|}{|a_i|+|b_i|}$$
+
+```{r}
+fit_hc_canberra <- hclust(dist(tmlzz,method = "canberra"))
+plot(fit_hc_canberra)
+```
+
+
+## 余弦距离（Cosine Distance）
+
+相比欧氏距离，余弦距离更加注重两个向量在方向上的差异。并不适用于交通流相似性比较。
+
+$$S=\frac{x·y}{|x||y|}=\frac{\sum_{i=1}^nx_iy_i}{\sqrt{\sum_{i=1}^nx_i^2}*\sqrt{\sum_{i=1}^ny_i^2}}$$
+
+```{r}
+dim(tmlzz)
+```
+
+```{r}
+21*21
+```
+
+```{r}
+cosdis <- matrix(rep(0,441),21,21)
+```
+
+```{r}
+for(i in 1:21){
+  for(j in 1:21){
+    if(i>j){
+      cosdis[i,j]=sum(t(tmlzz[i,])*tmlzz[j,])/sqrt((sum(tmlzz[i,]^2))*sum(tmlzz[j,]^2))
+    }
+  }
+}
+cosdis <- as.data.frame(cosdis)
+cosdis
+```
+
+```{r}
+names(cosdis) <- days
+```
+
+```{r}
+rownames(cosdis) <- days
+```
+
+
+```{r}
+sum(is.na(cosdis))
+```
+
+```{r}
+str(dist(tmlzz))
+```
+
+```{r}
+as.dist(cosdis)
+```
+
+
+
+```{r}
+fit_hc_cos <- hclust(as.dist(cosdis))
+plot(fit_hc_cos)
+```
+
+可见余弦距离的聚类没有什么用。
+
+## 对距离的重新思考
+
+考虑欧氏距离：
+
+$$d_{ab}=\sqrt{\sum_{i=1}^n(x_i-y_i)^2}$$
+
+只考虑了两向量各维度上的距离，没有考虑距离的平稳性。
+
+```{r}
+x <- seq(0,8,1)
+y <- -(x-4)**2+100
+z1 <- y-40
+z2 <- c(50,60,80,75,70,65,70,80,60)
+plot(x,y,type="b",ylim = c(0,100),pch=16)
+lines(x,z1,col="red",type = "b",pch=15)
+lines(x,z2,col="blue",type = "b",pch=17)
+legend("bottomright",title = "traffic flow",legend=c("y","z1","z2"),pch=c(16,15,17),col=c("black","red","blue"))
+```
+
+z1与y的欧氏距离
+
+```{r}
+dist(rbind(y,z1,z2))
+```
+
+```{r}
+sqrt(sum((y-z1)**2))
+```
+
+```{r}
+sqrt(sum((y-z2)**2))
+```
+
+显示y与z1的距离远，y与z2的距离近，与交通流情况不符。
+
+## 对距离的改进
+
+考虑欧氏距离：
+
+$$d_{ab}=\sqrt{\sum_{i=1}^n(x_i-y_i)^2}$$
+
+尝试加标准差
+
+$$z_i=x_i-y_i$$
+
+$$d_{ab}=R_1\sqrt{\sum_{i=1}^nz_i^2}+R_2\sqrt{\sum_{i=1}^n(z_i-\bar{z_i})^2}$$
+
+欧氏距离
+
+```{r}
+z <- (tmlzz[1,]-tmlzz[2,])
+```
+
+
+```{r}
+sqrt(sum(z**2))
+```
+
+正则项
+
+```{r}
+sqrt(sum((z-mean(as.matrix(z)))**2))
+```
+
+## 构造新的距离矩阵
+
+```{r}
+newdis <- matrix(rep(0,441),21,21)
+for(i in 1:21){
+  for(j in 1:21){
+    if(i>j){
+      z=tmlzz[i,]-tmlzz[j,]
+      newdis[i,j]=sqrt(sum(z**2))+sqrt(sum((z-mean(as.matrix(z)))**2))
+    }
+  }
+}
+newdis
+```
+
+```{r}
+names(newdis) <- days
+rownames(newdis) <- days
+as.dist(newdis)
+```
+
+## 分层聚类
+
+```{r}
+fit_hc_new <- hclust(as.dist(newdis))
+plot(fit_hc_new)
+```
+
+```{r}
+group_k3 <- cutree(fit_hc_new,k=3)
+group_k3 <- as.data.frame(group_k3)
+group_k3
+```
+
+## 平行坐标图
+
+```{r}
+tmlallnew <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlallnew.csv",header = T)
+dim(tmlallnew)
+```
+
+```{r}
+names(tmlallnew)
+```
+
+```{r}
+group_k3$日期 <- rownames(group_k3)
+names(group_k3)
+```
+
+
+```{r}
+tmltotal <- merge(tmlallnew,group_k3,by="日期")
+dim(tmltotal)
+```
+
+```{r}
+names(tmltotal)
+```
+
+```{r}
+str(tmltotal)
+```
+
+```{r}
+tmltotal$group_k3 <- as.factor(tmltotal$group_k3)
+names(tmltotal)[5] <- "层次聚类结果"
+names(tmltotal)
+```
+
+```{r}
+ggplot(tmltotal,aes(tmltotal$时间序号,tmltotal$机动车当量,group=tmltotal$日期,color=tmltotal$层次聚类结果))+
+  geom_line(alpha=1/5)+
+  geom_smooth(method = "loess",span=0.2,se = F)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("类别簇")+
+  scale_x_continuous(breaks = seq(0,288,24),limits = c(0,288))+
+  scale_y_continuous(breaks = seq(0,120,20))
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\原始数据改进距离.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+```{r}
+ggplot(tmltotal,aes(tmltotal$时间序号,tmltotal$机动车当量,group=tmltotal$日期,color=tmltotal$日期))+
+  stat_summary(aes(group=tmltotal$层次聚类结果,color=tmltotal$层次聚类结果),fun.y=mean,geom="line")+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("类别簇")+
+  scale_x_continuous(breaks = seq(0,288,24),limits = c(0,288))+
+  scale_y_continuous(breaks = seq(0,120,20))
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\原始数据改进距离平均值.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+
+
+
+
+
+
+

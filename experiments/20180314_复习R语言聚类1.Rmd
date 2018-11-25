@@ -1,0 +1,229 @@
+---
+title: "聚类方法回顾1"
+author: "wzy"
+date: "2018年3月14日"
+output: html_document
+---
+
+今天的实验主要是对R语言实现聚类算法的回顾。可用于复习的书和章节有：
+- 《复杂数据统计方法——基于R的应用》8.1.2
+- 《数据挖掘：R语言实战》
+
+# 《复杂数据统计方法——基于R的应用》8.1.2
+
+## 聚类数目的选择
+
+### 方法一
+
+- cluster包的函数clusGap()计算聚类度量的优度，即Gap统计量。
+- 对每个类数目k，它比较ln(W(k))和E*[ln(W(k))]，后者由自主罚定义，根据参考分布来做模拟。
+- 寻找最大值之所在要利用“1-SE准则”，寻求使得局部最大值在一个标准误差值内的最小的k。
+
+```{r}
+library(cluster)
+library(ICGE)
+library(ggmap)
+```
+
+```{r}
+names(faithful)
+```
+
+
+```{r}
+(z <- clusGap(faithful,FUN=kmeans,10))
+```
+
+Number of clusters (method 'firstSEmax', SE.factor=1): 2
+
+说明利用firstSEmax方法选择2个类
+
+可以对Gap统计量画出图来，并利用后面要介绍的k均值聚类来点出对于faithful数据分类的效果图。
+这里所用的k均值聚类方法为程序包cluster中的函数pam()，它比通常的K均值聚类方法更加稳健。
+
+```{r}
+a <- pam(faithful,2)
+par(mfrow=c(1,2))
+plot(z,main="Gap statistic for the Faithful data")
+plot(faithful,col=4,type="n")
+points(faithful[a$clust==1,],col=2,pch=16)
+points(faithful[a$clust==2,],col=4,pch=15)
+legend("topleft",c("Cluster 1","Cluster 2"),col=c(2,4),pch=16:15)
+```
+
+### 方法二
+
+利用所谓的INCA指数。所用的程序包为ICGE。
+
+```{r}
+d <- dist(faithful)
+T <- rep(NA,5)
+for(i in 2:10){
+  part <- pam(d,i)$clustering
+  T[i] <- INCAindex(d,part)$Total
+}
+plot(T,type="b",xlab="Number of clusters",ylab="INCA",xlim=c(1.5,10.5))
+title("Percentage of objects well classfied in the partition")
+```
+
+最大值点在类数取2，应该分成两类
+
+### 例二
+
+```{r}
+w <- read.table("D:\\data\\复杂数据统计方法\\LA_Neighborhoods.txt",header = TRUE)
+dim(w)
+```
+
+```{r}
+names(w)
+```
+
+```{r}
+w$density <- w$Population/w$Area
+u <- w[,-c(12:15)]
+```
+
+```{r}
+names(u)
+```
+
+```{r}
+(z <- clusGap(u[,-1],FUN=kmeans,20))
+```
+
+```{r}
+d <- dist(u[,-1])
+m <- 5
+T <- rep(NA,m)
+for(i in 2:20){
+  part <- pam(d,i)$clustering
+  T[i] <- INCAindex(d,part)$Total
+}
+par(mfrow=c(1,2))
+plot(z,main="Gap statistic for LA data")
+plot(T,type="b",xlab="Number of clusters",ylab="INCA",xlim=c(1.5,10.5))
+title("Percentage of objects well classified in the partition")
+```
+
+从左图看，第一个局部极大值位于1，如果不选择1，最近极大值为6，而在其一个标准差之内k的最小点是5，因此可以选择5类。
+
+从右图看，INCA指数最大值则是2.这就显示出各种方法的区别了。
+
+## 分层聚类
+
+聚类首先要确定点与点之间的距离，可以使用：
+
+- 欧氏距离；
+- 平方欧氏距离；
+- 绝对距离；
+- 夹角余弦；
+- MInkowski距离等；
+
+此外还要定义类间距离，包括：
+
+- 最短距离法；
+- 最长距离法；
+- 类平均法；
+- 重心法；
+- 离差平方和法；
+
+```{r,fig.width=12,fig.height=8}
+w <- read.table("D:\\data\\复杂数据统计方法\\LA_Neighborhoods.txt",header = TRUE)
+w <- data.frame(w,density=w$Population/w$Area)
+u <- w[,c(1,2,5,6,11,16)]
+# 标准化数据，聚类方法="complete"
+hh <- hclust(dist(scale(u[,-1])),"complete")
+plot(hh,labels=u[,1],cex=.6)
+# id <- identify(hh)
+id <- load("id.rda")
+```
+
+```{r}
+id[[1]]
+```
+
+
+```{r}
+load("20180315.RData")
+ppp <- c(7,17,19,21,24)
+plot(w[id[[1]],14:15],pch=ppp[1],col=1,xlim=c(-118.7,-118.1),ylim=c(33.73,34.32),main="Los Angeles")
+for(i in 2:5)
+  points(w[id[[i]],14:15],pch=ppp[i])
+legend("bottomleft",pch=ppp,paste("Cluster",1:5))
+```
+
+```{r}
+hdf <- get_map(location=c(lon=-118.1,lat=33.9))
+ggmap(hdf)
+```
+
+分层聚类的树状图直观易懂，容易帮助人们理解各类的特点和关系。
+其缺点是对于大数据的计算速度相对较慢。
+
+## k均值聚类
+
+k均值聚类的计算速度很快，缺点是必须事先选择类别的数目。
+
+```{r}
+w <- read.table("D:\\data\\复杂数据统计方法\\LA_Neighborhoods.txt",header = TRUE)
+w$density <- w$Population/w$Area
+u <- w[,-c(12:15)]
+a <- kmeans(scale(u[,-1]),5)
+ppp <- c(7,17,19,21)
+plot(w[a$cluster==1,14:15],pch=1,col=1,xlim=c(-118.7,-118.2),ylim=c(33.73,34.32),main="Los Angeles")
+for(i in 2:5)
+  points(w[a$cluster==i,14:15],pch=ppp[i-1])
+legend("bottomleft",pch=c(1,ppp),paste("Cluster",1:4))
+```
+
+## 含有聚类数目各种选择方法及各种聚类方法的综合程序包
+
+该程序包为NbClust
+
+### 距离选择
+
+- euclidean
+- maximum
+- manhattan
+- canberra
+- binary
+- minkowski
+- NULL
+
+### 提供的方法
+
+- ward.D
+- ward.D2
+- single
+- complete
+- average
+- mcquitty
+- median
+- centroid
+- kmeans
+
+all指标包括除gap,gamma,gplus,tau之外所有指数；
+
+alllong包括了all所没有包括的所有指标；
+
+```{r}
+library(NbClust)
+a <- NbClust(w[,-c(1,14:15)],distance="euclidean",min.nc = 2,max.nc = 8,method="complete",index="all")
+```
+
+```{r}
+a$All.index
+```
+
+```{r}
+a$Best.partition
+```
+
+
+```{r}
+b <- NbClust(w[,-c(1,14:15)],distance="euclidean",min.nc = 2,method="complete",index="all")
+```
+
+
+

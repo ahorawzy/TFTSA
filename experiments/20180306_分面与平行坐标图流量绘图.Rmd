@@ -1,0 +1,338 @@
+---
+title: "20180306分面与平行坐标图流量绘图"
+author: "王致远"
+date: "2018年3月6日"
+output: 
+  html_document: 
+    fig_height: 12
+---
+
+```{r}
+library(ggplot2)
+library(plyr)
+library(reshape2)
+```
+
+
+今天的实验任务主要是两个：
+
+1. 用分面图比较节假日和非节假日的交通流量形态，难点在于将图形大小调整，特别是宽度调整宽；
+2. 用平行坐标图方法比较节假日和非节假日交通流量形态特征，用不同颜色表示不同类别。
+
+## 分面图
+
+今天的两个内容都比较有挑战性
+
+```{r}
+tmlall <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tml.csv",header = T)
+dim(tmlall)
+```
+
+```{r}
+names(tmlall)
+```
+
+```{r}
+tmlall$机动车当量 <- tmlall$中小客车+1.5*tmlall$大客车+tmlall$小货车+1.5*tmlall$中货车+3*tmlall$大货车+4*tmlall$特大货车+
+  4*tmlall$集装箱+tmlall$摩托车+4*tmlall$集装箱
+```
+
+```{r}
+names(tmlall)
+```
+
+
+```{r}
+unique(tmlall$日期)
+```
+
+将节假日和非节假日分开
+
+```{r}
+jjr <- unique(tmlall$日期)[12:18]
+jjr
+```
+
+```{r}
+fjjr1 <- unique(tmlall$日期)[1:11]
+fjjr1
+```
+
+```{r}
+fjjr2 <- unique(tmlall$日期)[19:23]
+fjjr2
+```
+
+```{r, fig.width=8, fig.height=15}
+tmljjr <- tmlall[tmlall$日期==jjr,]
+qplot(tmljjr$时间序号,tmljjr$机动车当量,data=tmljjr,color=tmljjr$日期,geom="line")+
+  facet_grid(tmljjr$日期~.,scales="free_y")+geom_smooth(method = "loess",span=0.1)
+```
+
+```{r, fig.width=8, fig.height=15}
+tmlfjjr1 <- tmlall[tmlall$日期==fjjr1,]
+qplot(tmlfjjr1$时间序号,tmlfjjr1$机动车当量,data=tmlfjjr1,color=tmlfjjr1$日期,geom="line")+
+  facet_grid(tmlfjjr1$日期~.,scales="free_y")+geom_smooth(method = "loess",span=0.1)
+```
+
+```{r, fig.width=8, fig.height=15}
+tmlfjjr2 <- tmlall[tmlall$日期==fjjr2,]
+qplot(tmlfjjr2$时间序号,tmlfjjr2$机动车当量,data=tmlfjjr2,color=tmlfjjr2$日期,geom="line")+
+  facet_grid(tmlfjjr2$日期~.,scales="free_y")+geom_smooth(method = "loess",span=0.1)
+```
+
+数量级有问题，因为车道没有合并。需要重新整理数据。
+
+```{r}
+unique(tmlall$日期)
+```
+
+
+```{r}
+try_tml1001 <- tmlall[tmlall$日期=="01-10月-16",]
+dim(try_tml1001)
+```
+
+## 平行坐标图
+
+本数据可能并不是标准意义上的平行坐标图。
+
+### 书上示例
+
+```{r}
+movies <- read.csv("D:\\data\\movies.csv",header = T)
+dim(movies)
+```
+
+```{r}
+popular <- subset(movies,votes>1e4)
+ratings <- popular[,8:17]
+ratings$.row <- rownames(ratings)
+molten <- melt(ratings,id=".row")
+```
+
+数据整理成长格式后，以variable为x轴，以value为y轴，以.row分组，画出折线，就得到平行坐标图。
+
+```{r}
+pcp <- ggplot(molten,aes(variable,value,group=.row))
+pcp+geom_line()
+```
+
+```{r}
+pcp+geom_line(colour="black",alpha=1/20)
+```
+
+```{r}
+jit <- position_jitter(width=0.25,height=2.5)
+pcp+geom_line(position=jit)
+```
+
+```{r}
+pcp+geom_line(colour="black",alpha=1/20,position="jitter")
+```
+
+为了更清楚地观察电影得分规律，把电影进行聚类，使投票模式相近的被分到一类。
+
+```{r}
+c1 <- kmeans(ratings[1:10],6)
+ratings$cluster <- reorder(factor(c1$cluster),popular$rating)
+levels(ratings$cluster) <- seq_along(levels(ratings$cluster))
+molten <- melt(ratings,id=c(".row","cluster"))
+```
+
+可视化聚类结果有很多不同方法，比较常用的方法是把不同的类标为不同的颜色。然后再把魅族的均值单独画在一张图上作为补充。
+
+```{r}
+pcp_c1 <- ggplot(molten,aes(variable,value,group=.row,colour=cluster))
+pcp_c1+geom_line(position="jitter",alpha=1/5)
+```
+
+```{r}
+pcp_c1+stat_summary(aes(group=cluster),fun.y = mean,geom="line")
+```
+
+### 节假日数据tmljjr尝试
+
+本数据可能就是变换好的长型数据。
+
+```{r}
+tmljjr <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmljjr.csv",header = T)
+tmljjr <- tmljjr[,c(2,5,15)]
+dim(tmljjr)
+```
+
+“日期”就是.row，时间序号就是variable，机动车当量就是value
+
+```{r}
+ggplot(tmljjr,aes(tmljjr$时间序号,tmljjr$机动车当量,group=tmljjr$日期,color=tmljjr$日期))+geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  xlab("时间序号")+ylab("车流量")+labs(colour="日期")
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\节假日交通流.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+### 非节假日数据fjjr1尝试
+
+```{r}
+tmlfjjr1 <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlfjjr1.csv",header = T)
+tmlfjjr1 <- tmlfjjr1[,c(2,5,15)]
+dim(tmlfjjr1)
+```
+
+```{r}
+ggplot(tmlfjjr1,aes(tmlfjjr1$时间序号,tmlfjjr1$机动车当量,group=tmlfjjr1$日期,color=tmlfjjr1$日期))+geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  xlab("时间序号")+ylab("车流量")+labs(colour="日期")
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\非节假日交通流1.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+### 处理非节假日数据fjjr2
+
+```{r}
+tml <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tml.csv",header = T)
+dim(tml)
+```
+
+```{r}
+tml$机动车当量 <- 1*tml$中小客车+1*tml$小货车+1.5*tml$大客车+1.5*tml$中货车+3*tml$大货车+4*tml$特大货车+4*tml$集装箱+1*tml$摩托车+4*tml$拖拉机
+```
+
+```{r}
+names(tml)
+```
+
+```{r}
+unique(tml$日期)
+```
+
+
+```{r}
+tml1008 <- subset(tml,日期=="08-10月-16")
+
+tml1008S11 <- subset(tml1008,CDH==11 & 上下行方向=="S")
+tml1008S12 <- subset(tml1008,CDH==12 & 上下行方向=="S")
+tml1008X31 <- subset(tml1008,CDH==31 & 上下行方向=="X")
+tml1008X32 <- subset(tml1008,CDH==32 & 上下行方向=="X")
+
+tml1008all <- tml1008S11
+for(i in 9:18){tml1008all[,i]=tml1008S11[,i]+tml1008S12[,i]+tml1008X31[,i]+tml1008X32[,i]}
+
+tml1008all <- tml1008all[order(tml1008all$分钟),]
+tml1008all <- tml1008all[order(tml1008all$小时),]
+sapply(tml1008all[,9:18],sum)
+dim(tml1008all)
+```
+
+```{r}
+tml1009 <- subset(tml,日期=="09-10月-16")
+
+tml1009S11 <- subset(tml1009,CDH==11 & 上下行方向=="S")
+tml1009S12 <- subset(tml1009,CDH==12 & 上下行方向=="S")
+tml1009X31 <- subset(tml1009,CDH==31 & 上下行方向=="X")
+tml1009X32 <- subset(tml1009,CDH==32 & 上下行方向=="X")
+
+tml1009all <- tml1009S11
+for(i in 9:18){tml1009all[,i]=tml1009S11[,i]+tml1009S12[,i]+tml1009X31[,i]+tml1009X32[,i]}
+
+tml1009all <- tml1009all[order(tml1009all$分钟),]
+tml1009all <- tml1009all[order(tml1009all$小时),]
+sapply(tml1009all[,9:18],sum)
+dim(tml1009all)
+```
+
+```{r}
+tml1010 <- subset(tml,日期=="10-10月-16")
+
+tml1010S11 <- subset(tml1010,CDH==11 & 上下行方向=="S")
+tml1010S12 <- subset(tml1010,CDH==12 & 上下行方向=="S")
+tml1010X31 <- subset(tml1010,CDH==31 & 上下行方向=="X")
+tml1010X32 <- subset(tml1010,CDH==32 & 上下行方向=="X")
+
+tml1010all <- tml1010S11
+for(i in 9:18){tml1010all[,i]=tml1010S11[,i]+tml1010S12[,i]+tml1010X31[,i]+tml1010X32[,i]}
+
+tml1010all <- tml1010all[order(tml1010all$分钟),]
+tml1010all <- tml1010all[order(tml1010all$小时),]
+sapply(tml1010all[,9:18],sum)
+dim(tml1010all)
+```
+
+```{r}
+tml1011 <- subset(tml,日期=="11-10月-16")
+
+tml1011S11 <- subset(tml1011,CDH==11 & 上下行方向=="S")
+tml1011S12 <- subset(tml1011,CDH==12 & 上下行方向=="S")
+tml1011X31 <- subset(tml1011,CDH==31 & 上下行方向=="X")
+tml1011X32 <- subset(tml1011,CDH==32 & 上下行方向=="X")
+
+tml1011all <- tml1011S11
+for(i in 9:18){tml1011all[,i]=tml1011S11[,i]+tml1011S12[,i]+tml1011X31[,i]+tml1011X32[,i]}
+
+tml1011all <- tml1011all[order(tml1011all$分钟),]
+tml1011all <- tml1011all[order(tml1011all$小时),]
+sapply(tml1011all[,9:18],sum)
+dim(tml1011all)
+```
+
+```{r}
+tml1012 <- subset(tml,日期=="12-10月-16")
+
+tml1012S11 <- subset(tml1012,CDH==11 & 上下行方向=="S")
+tml1012S12 <- subset(tml1012,CDH==12 & 上下行方向=="S")
+tml1012X31 <- subset(tml1012,CDH==31 & 上下行方向=="X")
+tml1012X32 <- subset(tml1012,CDH==32 & 上下行方向=="X")
+
+tml1012all <- tml1012S11
+for(i in 9:18){tml1012all[,i]=tml1012S11[,i]+tml1012S12[,i]+tml1012X31[,i]+tml1012X32[,i]}
+
+tml1012all <- tml1012all[order(tml1012all$分钟),]
+tml1012all <- tml1012all[order(tml1012all$小时),]
+sapply(tml1012all[,9:18],sum)
+dim(tml1012all)
+```
+
+```{r}
+write.csv(tml1008all,"D:\\data\\thesis\\201610\\tmldata\\tml1008all.csv",sep = ',')
+write.csv(tml1009all,"D:\\data\\thesis\\201610\\tmldata\\tml1009all.csv",sep = ',')
+write.csv(tml1010all,"D:\\data\\thesis\\201610\\tmldata\\tml1010all.csv",sep = ',')
+write.csv(tml1011all,"D:\\data\\thesis\\201610\\tmldata\\tml1011all.csv",sep = ',')
+write.csv(tml1012all,"D:\\data\\thesis\\201610\\tmldata\\tml1012all.csv",sep = ',')
+```
+
+### 非节假日数据fjjr2尝试
+
+```{r}
+tmlfjjr2 <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlfjjr2.csv",header = T)
+tmlfjjr2 <- tmlfjjr2[,c(2,5,15)]
+dim(tmlfjjr2)
+```
+
+```{r}
+ggplot(tmlfjjr2,aes(tmlfjjr2$时间序号,tmlfjjr2$机动车当量,group=tmlfjjr2$日期,color=tmlfjjr2$日期))+geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  xlab("时间序号")+ylab("车流量")+labs(colour="日期")
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\非节假日交通流2.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+### 非节假日总体
+
+```{r}
+tmlfjjr <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlfjjr.csv",header = T)
+tmlfjjr <- tmlfjjr[,c(2,5,15)]
+dim(tmlfjjr)
+```
+
+```{r}
+ggplot(tmlfjjr,aes(tmlfjjr$时间序号,tmlfjjr$机动车当量,group=tmlfjjr$日期,color=tmlfjjr$日期))+geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  xlab("时间序号")+ylab("车流量")+labs(colour="日期")
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\非节假日交通流.jpg",width=7.29,height=4.5,dpi=600)
+```
+

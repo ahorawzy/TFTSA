@@ -1,0 +1,160 @@
+---
+title: "20180414_BoxJenkins建模"
+author: "wzy"
+date: "2018年4月14日"
+output: html_document
+---
+
+今天的实验主要是对10月1日交通流量进行BoxJenkins建模。
+
+## 读取数据
+
+```{r}
+library(TSA)
+library(forecast)
+library(ggplot2)
+```
+
+```{r}
+tml1001all <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tml1001all.csv",header = T)
+dim(tml1001all)
+```
+
+```{r}
+names(tml1001all)
+```
+
+```{r}
+tml1001 <- tml1001all[,c(5,15)]
+names(tml1001) <- c("时间序号","机动车流量")
+names(tml1001)
+```
+
+```{r}
+ggplot(tml1001,aes(x=tml1001$时间序号,y=tml1001$机动车流量))+
+  geom_point(colour="steelblue")+
+  geom_line(colour="steelblue")
+```
+
+```{r}
+flow1001 <- tml1001$机动车流量
+dif1001 <- diff(flow1001)
+```
+
+
+## 模型识别
+
+### EACF
+
+```{r}
+eacf(dif1001)
+```
+
+识别出差分序列似乎是MA(1)模型
+
+### forecast包自动识别
+
+```{r}
+fit_auto1 <- auto.arima(dif1001)
+fit_auto1
+```
+
+```{r}
+fit_auto2 <- auto.arima(flow1001)
+fit_auto2
+```
+
+识别出差分序列是MA(1)型，原序列为IMA(1,1)型，系数显著不为0
+
+### 子集ARMA(p,q)模型
+
+```{r}
+set.seed(123)
+fit_auto3 <- armasubsets(y=dif1001,nar=5,nma=5,y.name='test',ar.method = "ols")
+plot(fit_auto3)
+```
+
+可以看出差分序列是MA(1)型的
+
+## 参数估计
+
+```{r}
+fit1 <- arima(flow1001,order=c(0,1,1),method="CSS")
+fit1
+```
+
+### 预测效果
+
+```{r}
+fit1res <- residuals(fit1)
+fit1fit <- fitted(fit1)
+```
+
+
+```{r}
+length(fit1fit)
+length(fit1res)
+```
+
+```{r}
+plot(x=tml1001$时间序号,y=tml1001$机动车流量,type="b")
+lines(fit1fit,col="red")
+```
+
+```{r}
+fit1fit <- as.vector(fit1fit)
+fit1res <- as.vector(fit1res)
+fit1df <- cbind(tml1001,fit1fit,fit1res)
+names(fit1df)[c(3,4)] <- c("拟合值","残差")
+names(fit1df)
+```
+
+```{r}
+write.csv(fit1df,"D:\\data\\thesis\\201610\\tmldata\\fitarima.csv")
+```
+
+
+```{r}
+ggplot(fit1df,aes(x=fit1df$时间序号,y=fit1df$机动车流量))+
+  geom_point(colour="steelblue")+
+  geom_line(colour="steelblue")+
+  geom_line(aes(x=fit1df$时间序号,y=fit1df$拟合值),colour="red",size=1)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue()+
+  scale_x_continuous(breaks = seq(0,288,24),limits = c(0,288))+
+  scale_y_continuous(breaks = seq(0,120,20))
+
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\ARIMA结果.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+```{r}
+TFTSA::flow_evaluate(fit1df$机动车流量,fit1df$拟合值)
+```
+
+## 残差分析
+
+```{r}
+plot(1:288,fit1res)
+```
+
+```{r}
+Box.test(fit1res)
+```
+
+```{r}
+qqnorm(fit1res)
+qqline(fit1res)
+```
+
+```{r}
+acf(fit1res)
+```
+
+```{r}
+pacf(fit1res)
+```
+
+```{r}
+fit1density <- density(fit1res)
+plot(fit1density)
+```
+

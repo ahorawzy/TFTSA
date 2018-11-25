@@ -1,0 +1,379 @@
+---
+title: "20180504_5.2节研究"
+author: "wzy"
+date: "2018年5月4日"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+```
+
+## 10月1日数据
+
+```{r}
+tml1001 <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tml1001all.csv",header = T)
+dim(tml1001)
+```
+
+```{r}
+str(tml1001)
+```
+
+```{r}
+names(tml1001)
+```
+
+```{r}
+tml1001 <- tml1001[,c(5,15)]
+names(tml1001)
+```
+
+```{r}
+ggplot(data=tml1001,aes(tml1001$时间序号,tml1001$机动车当量))+
+  geom_point(colour="steelblue")+
+  geom_line(colour="steelblue")
+```
+
+```{r}
+rm(tml1001)
+```
+
+
+## 产生历史数据库
+
+### 长型数据
+
+```{r}
+tmlall <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlall.csv",header = T)
+dim(tmlall)
+```
+
+```{r}
+table(tmlall$日期)
+```
+
+此为没有填补缺失值的数据，没有利用价值，删除
+
+```{r}
+rm(tmlall)
+```
+
+
+```{r}
+tmlallnew <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlallnew.csv",header = T)
+table(tmlallnew$日期)
+```
+
+```{r}
+dim(tmlallnew)
+```
+
+```{r}
+names(tmlallnew)
+```
+
+
+此为填补了缺失值的数据
+
+### 宽型数据
+
+```{r}
+tmlzz <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlzz.csv",header = T)
+dim(tmlzz)
+```
+
+```{r}
+rownames(tmlzz) <- tmlzz[,1]
+tmlzz <- tmlzz[,-1]
+dim(tmlzz)
+```
+
+查看是否有缺失值
+
+```{r}
+sum(is.na(tmlzz))
+```
+
+缺失值定位
+
+```{r}
+which(is.na(tmlzz),arr.ind = T) 
+```
+
+```{r}
+tmlzz[8,232] = 28.625
+sum(is.na(tmlzz))
+```
+
+缺失值填补完
+
+写入新数据
+
+```{r}
+write.csv(tmlzz,"D:\\data\\thesis\\201610\\tmldata\\tmlzznew.csv")
+```
+
+可以猜想，可以利用宽型数据作为数据库
+
+## 绘制平行坐标图，查看规律
+
+```{r}
+ggplot(tmlallnew,aes(tmlallnew$时间序号,tmlallnew$机动车当量,group=tmlallnew$日期,color=tmlallnew$日期))+
+  geom_line(alpha=1/7)+
+  geom_smooth(method = "loess",span=0.1,se = F)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")
+```
+
+```{r}
+tmlallnew[tmlallnew$时间序号==332,2] = 232
+```
+
+```{r}
+write.csv(tmlallnew,"D:\\data\\thesis\\201610\\tmldata\\tmlallnew.csv")
+```
+
+
+```{r}
+ggplot(tmlallnew,aes(tmlallnew$时间序号,tmlallnew$机动车当量,group=tmlallnew$日期,color=tmlallnew$日期))+
+  geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))
+```
+
+```{r}
+tmlallnew$是否为节假日 <- as.factor(tmlallnew$是否为节假日)
+```
+
+### 96~120
+
+```{r}
+ggplot(tmlallnew,aes(tmlallnew$时间序号,tmlallnew$机动车当量,group=tmlallnew$日期,color=tmlallnew$是否为节假日))+
+  #geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.2,se = F)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("是否为节假日")+
+  scale_x_continuous(breaks = seq(0,288,24),limits = c(96,120))+
+  scale_y_continuous(breaks = seq(0,120,20))
+```
+
+### 120~144
+
+```{r}
+ggplot(tmlallnew,aes(tmlallnew$时间序号,tmlallnew$机动车当量,group=tmlallnew$日期,color=tmlallnew$是否为节假日))+
+  #geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.2,se = F)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("是否为节假日")+
+  scale_x_continuous(breaks = seq(0,288,24),limits = c(120,144))+
+  scale_y_continuous(breaks = seq(0,120,20))
+```
+
+### 144~168
+
+```{r}
+ggplot(tmlallnew,aes(tmlallnew$时间序号,tmlallnew$机动车当量,group=tmlallnew$日期,color=tmlallnew$是否为节假日))+
+  #geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.2,se = F)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("是否为节假日")+
+  scale_x_continuous(breaks = seq(0,288,24),limits = c(144,168))+
+  scale_y_continuous(breaks = seq(0,120,20))
+```
+
+### 168~192
+
+```{r}
+ggplot(tmlallnew,aes(tmlallnew$时间序号,tmlallnew$机动车当量,group=tmlallnew$日期,color=tmlallnew$是否为节假日))+
+  #geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.2,se = F)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("是否为节假日")+
+  scale_x_continuous(breaks = seq(0,288,24),limits = c(168,192))+
+  scale_y_continuous(breaks = seq(0,120,20))
+```
+
+```{r}
+ggplot(tmlallnew,aes(tmlallnew$时间序号,tmlallnew$机动车当量,group=tmlallnew$日期,color=tmlallnew$是否为节假日))+
+  #geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.2,se = F)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")+
+  scale_x_continuous(breaks = seq(0,288,24),limits = c(192,216))+
+  scale_y_continuous(breaks = seq(0,120,20))
+```
+
+
+## 聚类尝试
+
+### Kmeans 0~120
+
+```{r}
+fit_km1 <- kmeans(tmlzz[,1:120],centers = 5)
+fit_km1$cluster
+```
+
+### dist 0~120
+
+```{r}
+as.matrix(dist(tmlzz[96:120]))[,1]
+```
+
+```{r}
+sort(as.matrix(dist(tmlzz[96:120]))[,1])
+```
+
+结果不尽如人意，有非节假日混入
+
+### dist 120~144
+
+```{r}
+sort(as.matrix(dist(tmlzz[120:144]))[,1])
+```
+
+## 半自动K近邻算法
+
+### 算法想法
+
+1. 通过之前2小时的预测之后1小时的；
+2. 每次预测更新；
+
+### 算法描述
+
+1. 选择需要预测的某日交通流，即目标序列；
+2. 生成不包含目标序列的序列库；
+3. 设定起始时间序号如73；目标序列在起始时间序号之前的预测值为真实值；
+4. 计算观察窗73-12*2=49，观察窗为49~72；计算预测窗73+12-1=84，预测窗为73~84;
+5. 计算观察窗内，目标序列与序列库中序列的距离，并从小到大排序，选择前K个作为近邻；
+6. 计算近邻在73~84的合成值，例如平均值，作为目标序列73~84的预测值；；
+7. 推进时间序号到84+1=85；重复4~6；
+
+### 数据准备
+
+选择目标序列，例如10月6日；生成序列库；
+
+```{r}
+rownames(tmlzz)
+```
+
+```{r}
+dim(tmlzz)
+```
+
+
+```{r}
+tmlobj <- tmlzz[6,]
+rownames(tmlobj)
+```
+
+```{r}
+tmlbase <- tmlzz[-6,]
+rownames(tmlbase)
+```
+
+```{r}
+dim(tmlbase)
+```
+
+### 基础函数
+
+```{r}
+flowknn <- function(obj,base,start,k,lag_duration,fore_duration){
+  
+  
+  ld = lag_duration
+  fd = fore_duration
+  st = start
+  
+  
+  foreflow <- obj
+  foreflow[,] <- 0
+  
+  
+  foreflow[,1:st] = obj[,1:st]
+  
+  
+  fl = st
+  
+  flowall = rbind(obj,base)
+  
+  while(fl<(ncol(obj)-1)){
+    
+    
+    fwin = fl - ld
+    bwin = fl + fd - 1
+    
+    
+    knnames = names(sort(as.matrix(dist(flowall[,fwin:fl-1]))[,1]))[2:(2+k-1)]
+    cat("预测区间为",fl,"到",bwin,"所选近邻为",knnames,"\n")
+    
+    
+    kn <- base[knnames,fl:bwin]
+    foreflow[,fl:bwin] <- colMeans(kn)
+    
+    
+    
+    fl = bwin+1
+  }
+  return(foreflow)
+}
+```
+
+```{r}
+pre <- flowknn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12)
+pre
+```
+
+```{r}
+plot(1:288,pre,type="l",col="red")
+points(1:288,tmlobj,col="blue")
+```
+
+```{r}
+tmlboth <- rbind(tmlobj,pre)
+tmlboth <- as.data.frame(tmlboth)
+tmlboth <- t(tmlboth)
+names(tmlboth) <- c("true","pre")
+```
+
+```{r}
+tmlboth <- as.data.frame(tmlboth)
+```
+
+
+```{r}
+ggplot(tmlboth,aes(1:288,tmlboth$`06-10月-16`))+geom_point(colour="steelblue")+
+  geom_line(aes(1:288,tmlboth$`06-10月-161`),colour="red",size=1)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))
+```
+
+### 残差检验
+
+```{r}
+res1006 <- tmlobj[,73:length(tmlobj)] - pre[,73:length(tmlobj)]
+```
+
+```{r}
+plot(73:288,res1006)
+abline(h=0)
+```
+
+```{r}
+res1006 <- as.numeric(res1006)
+acf(res1006)
+```
+
+```{r}
+plot(res1006[2:length(res1006)],diff(res1006))
+```
+
+
+```{r}
+qqnorm(res1006)
+qqline(res1006)
+```
+
+```{r}
+res1006density <- density(res1006)
+plot(res1006density)
+```
+

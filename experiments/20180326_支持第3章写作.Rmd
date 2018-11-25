@@ -1,0 +1,205 @@
+---
+title: "20180326_支持第3章写作"
+author: "wzy"
+date: "2018年3月26日"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(reshape2)
+```
+
+
+本实验主要用来支持第3章的写作。
+
+## 3.1 交通流数据介绍
+
+### 3.1.2 数据维度与字段
+
+```{r}
+tml <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tml.csv",header = T)
+dim(tml)
+```
+
+```{r}
+names(tml)
+```
+
+```{r}
+unique(tml$观测站编号)
+```
+
+```{r}
+unique(tml$观测站名称)
+```
+
+```{r}
+unique(tml$日期)
+```
+
+```{r}
+unique(tml$小时)
+```
+
+```{r}
+unique(tml$分钟)
+```
+
+```{r}
+sort(unique(tml$时间序号))
+```
+
+
+```{r}
+table(tml$上下行方向,tml$CDH)
+```
+
+## 3.2 描述性统计与预处理
+
+### 3.2.1 描述性统计
+
+```{r}
+names(tml)
+```
+
+```{r}
+dim(tml)
+```
+
+```{r}
+tmlflow <- tml[,9:17]
+names(tmlflow)
+```
+
+```{r}
+summary(tmlflow)
+```
+
+
+```{r}
+boxplot(tmlflow,names = names(tmlflow),cex.axis=0.7,cex=0.7)
+```
+
+```{r}
+unique(tml$日期)
+```
+
+
+```{r}
+tml1001 <- tml[tml$日期=="01-10月-16",]
+tml1001flow <- tml1001[,9:17]
+dim(tml1001flow)
+```
+
+
+```{r}
+flowcolsums <- colSums(tml1001flow)
+flowcolsums <- as.data.frame(flowcolsums)
+colnames(flowcolsums) <- "flow"
+flowcolsums$name <- rownames(flowcolsums)
+flowcolsums$name <- factor(flowcolsums$name,levels = flowcolsums$name)
+```
+
+```{r}
+ggplot(data=flowcolsums,aes(x=name,y=flow))+
+  geom_bar(stat="identity",fill="steelblue")+
+  theme(legend.position="none")+
+  xlab("车辆类型")+ylab("交通流量")+
+  geom_text(aes(label=flowcolsums$flow),vjust=-0.5)+
+  theme(axis.text.x=element_text(size = 10,face="bold"))
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\10月1日交通流量条形图.png",dpi=600)
+```
+
+研究分上下行对车流量的影响
+
+```{r}
+unique(tml1001$上下行方向)
+```
+
+
+```{r}
+tml1001sflow <- tml1001[tml1001$上下行方向=="S",9:17]
+names(tml1001sflow)
+```
+
+```{r}
+flowcolsumsS <- colSums(tml1001sflow)
+flowcolsumsS <- as.data.frame(flowcolsumsS)
+colnames(flowcolsumsS) <- "flow"
+flowcolsumsS$name <- rownames(flowcolsumsS)
+flowcolsumsS$name <- factor(flowcolsumsS$name,levels = flowcolsumsS$name)
+```
+
+```{r}
+ggplot(data=flowcolsumsS,aes(x=name,y=flow))+
+  geom_bar(stat="identity",fill="steelblue")+
+  theme(legend.position="none")+
+  xlab("车辆类型")+ylab("交通流量")+
+  geom_text(aes(label=flowcolsumsS$flow),vjust=-0.5)+
+  theme(axis.text.x=element_text(size = 10,face="bold"))
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\10月1日交通流量条形图.png",dpi=600)
+```
+
+#### 换一种方式思考
+
+```{r}
+names(tml1001)
+```
+
+```{r}
+mm <- tml1001[,c(3,6,8,9:17)]
+mm <- melt(data = mm,id=(c("日期","时间序号","CDH")))
+mm$CDH <- as.factor(mm$CDH)
+```
+
+```{r}
+names(mm)
+```
+
+
+```{r}
+ggplot(mm,aes(x=mm$variable,y=mm$value,fill=mm$CDH))+
+  geom_bar(stat = "identity",position = "dodge")+
+  theme(legend.title=element_text("车道号"))+
+  xlab("车辆类型")+ylab("交通流量")+labs(fill="车道号")+
+  theme(axis.text.x=element_text(size = 10,face="bold"))
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\10月1日分车道交通流量条形图.png",dpi=600)
+```
+
+
+```{r}
+table(tml$日期)
+```
+
+
+### 3.2.2 数据预处理
+
+```{r}
+tmlall <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlall.csv",header = T)
+dim(tmlall)
+```
+
+```{r}
+table(tmlall$日期)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

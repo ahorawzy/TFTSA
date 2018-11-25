@@ -1,0 +1,58 @@
+---
+title: "20171219_10月1日交通流随机森林建模"
+author: "王致远"
+date: "2017年12月19日"
+output: html_document
+---
+
+```{r warning=FALSE}
+library(TSA)
+library(ggplot2)
+library(forecast)
+library(randomForest)
+```
+
+在上一次实验中，使用Box-Jenkins方法对10月1日当天交通流建模，一开始使用LOESS数据，发现不行，因为和LOESS几乎重合，没有区别；后面使用原换算当量的交通流量。总误差平方和为47171.85。使用指数平滑法预测下一个5min，得到总误差平方和为47189.7，和ARIMA模型差距不大，但指数平滑的计算量更低，参数更少，模型更简洁，更适用。
+
+今天的实验尝试用随机森林回归建模。
+
+读取数据
+
+```{r}
+tml1001 <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tml1001_2.csv",header = T)
+dim(tml1001)
+```
+
+```{r}
+head(tml1001)
+```
+
+读取变换为t-5,t-10,t-15,t-20后的数据
+
+```{r}
+diff_tml1001 <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tml1001_3.csv",header = T)
+dim(diff_tml1001)
+```
+
+```{r}
+names(diff_tml1001)
+```
+
+```{r}
+rf1 <- randomForest(t~t.5+t.10+t.15+t.20,data=diff_tml1001)
+```
+
+```{r}
+plot(diff_tml1001$时间序号,diff_tml1001$t)
+lines(diff_tml1001$时间序号,rf1$predicted,col="red",lwd=2)
+```
+
+```{r}
+length(rf1$predicted)
+```
+
+```{r}
+sum((rf1$predicted-diff_tml1001$t)**2)
+```
+
+发现精确度还不如ARIMA和指数平滑。观察图形发现，对高峰的预测明显不足。曲线变化较为缓和。

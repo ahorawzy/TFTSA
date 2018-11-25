@@ -1,0 +1,121 @@
+---
+title: "20180323_LOESS数据的新距离"
+author: "wzy"
+date: "2018年3月23日"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(reshape2)
+```
+
+
+今天的实验是聚类这一章的最后一次实验。之前的实验进行得都很顺利。
+
+今天的实验是使用LOESS距离，用新设计的距离来做。今天的实验技术之前都完成了，按理论上难度不大。
+
+## 数据准备
+
+### 导入LOESS数据
+
+```{r}
+tmlallloess <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlallloess.csv")
+dim(tmlallloess)
+```
+
+```{r}
+names(tmlallloess)
+```
+
+```{r}
+tmldzzloess <- tmlallloess[,c(2,3,6)]
+names(tmldzzloess)
+```
+
+### 数据转置
+
+```{r}
+tmlzzloess <- dcast(tmldzzloess,tmldzzloess$日期~tmldzzloess$时间序号)
+dim(tmlzzloess)
+```
+
+```{r}
+rownames(tmlzzloess) <- tmlzzloess[,1]
+tmlzzloess <- tmlzzloess[,2:289]
+dim(tmlzzloess)
+```
+
+### 处理缺失值
+
+```{r}
+sum(!complete.cases(tmlzzloess))
+```
+
+```{r}
+tmlzzloess[!complete.cases(tmlzzloess),232] <- 27.395
+```
+
+```{r}
+sum(!complete.cases(tmlzzloess))
+```
+
+缺失值处理完了。
+
+## 计算新距离
+
+```{r}
+newdisloess <- matrix(rep(0,441),21,21)
+for(i in 1:21){
+  for(j in 1:21){
+    if(i>j){
+      z=tmlzzloess[i,]-tmlzzloess[j,]
+      newdisloess[i,j]=sqrt(sum(z**2))+sqrt(sum((z-mean(as.matrix(z)))**2))
+    }
+  }
+}
+newdisloess
+```
+
+```{r}
+days <- rownames(tmlzzloess)
+days
+```
+
+
+```{r}
+names(newdisloess) <- days
+rownames(newdisloess) <- days
+as.dist(newdisloess)
+```
+
+## 层次聚类
+
+```{r}
+fit_hc_new_loess <- hclust(as.dist(newdisloess))
+plot(fit_hc_new_loess)
+```
+
+分类结果明显更合理！
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

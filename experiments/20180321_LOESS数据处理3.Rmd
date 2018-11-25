@@ -1,0 +1,218 @@
+---
+title: "20180321_LOESS数据处理"
+author: "wzy"
+date: "2018年3月21日"
+output: html_document
+---
+
+```{r}
+library(reshape2)
+library(ggplot2)
+```
+
+
+本实验基于之前聚类的实验。之前的实验是用原始数据，数据存在较大噪音，但也取得了很好的效果。
+
+本实验是用LOESS方法平滑掉数据噪音之后再聚类，比较K-均值聚类的 组间平方和/总平方和指标，看是否有提升。
+
+首先是要将原始数据处理出LOESS数据。SPAN取0.3。
+
+## 读取数据
+
+```{r}
+tmlallnew <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlallnew.csv",header=T)
+dim(tmlallnew)
+```
+
+```{r}
+names(tmlallnew)
+```
+
+```{r}
+table(tmlallnew$日期)
+```
+
+数据没有缺失。
+
+## LOESS函数尝试
+
+```{r}
+unique(tmlallnew$日期)
+```
+
+
+```{r}
+tml1001 <- tmlallnew[tmlallnew$日期=="01-10月-16",]
+dim(tml1001)
+```
+
+```{r}
+loess1 <- loess(tml1001$机动车当量~tml1001$时间序号,span=0.3)
+plot(tml1001$时间序号,tml1001$机动车当量,type="l")
+lines(tml1001$时间序号,loess1$fit,col="red")
+```
+
+```{r}
+length(loess1$fitted)
+```
+
+```{r}
+loess1$fitted
+```
+
+
+## 处理LOESS数据
+
+```{r}
+days <- unique(tmlallnew$日期)
+days
+```
+
+```{r}
+length(days)
+```
+
+```{r}
+tmlallnew$loess <- rep(NA,length(tmlallnew))
+```
+
+```{r}
+names(tmlallnew)
+```
+
+
+```{r}
+handleloess <- function(df,exp,resp){
+  result <- rep(NA,nrow(df))
+  result <- loess(df[,resp]~df[,exp],span=0.3)
+  return(result$fitted)
+}
+```
+
+```{r}
+names(tml1001)
+```
+
+
+```{r}
+names(tmlallnew)
+```
+
+
+```{r}
+for (i in days) {
+  tmlallnew[tmlallnew$日期==i,5] <- handleloess(tmlallnew[tmlallnew$日期==i,],exp=2,resp=3)
+}
+```
+
+好像是成功了！
+
+把数据写入文件
+
+```{r}
+write.csv(tmlallnew,"D:\\data\\thesis\\201610\\tmldata\\tmlallloess.csv")
+```
+
+## 数据转置
+
+```{r}
+tmlallloess <- tmlallnew
+```
+
+```{r}
+names(tmlallloess)
+```
+
+```{r}
+tmldzzloess <- tmlallloess[,c(1,2,5)]
+names(tmldzzloess)
+```
+
+```{r}
+tmlzzloess <- dcast(tmldzzloess,tmldzzloess$日期~tmldzzloess$时间序号)
+dim(tmlzzloess)
+```
+
+```{r}
+rownames(tmlzzloess) <- tmlzzloess[,1]
+tmlzzloess <- tmlzzloess[,2:289]
+dim(tmlzzloess)
+```
+
+```{r}
+sum(!complete.cases(tmlzzloess))
+```
+
+存在一个缺失值
+
+```{r}
+tmlzzloess[!complete.cases(tmlzzloess),232] <- 27.395
+```
+
+```{r}
+sum(!complete.cases(tmlzzloess))
+```
+
+不存在缺失值了
+
+## 分层聚类
+
+```{r}
+fit_hc_loess <- hclust(dist(tmlzzloess))
+print(fit_hc_loess)
+```
+
+```{r}
+plot(fit_hc_loess)
+```
+
+分类和原数据有所区别，但分两类时，也是可以完全正确分类
+
+## K均值聚类
+
+```{r}
+fit_km_loess <- kmeans(tmlzzloess,centers = 2)
+fit_km_loess$cluster
+```
+
+```{r}
+fit_km_loess$betweenss/fit_km_loess$totss
+```
+
+组间平方和/总平方和指标从39.2%提升到了66.48%，再提升到71.19%，再提升到73.71%。可见LOESS有效果。
+
+## 数据合并与平行坐标图
+
+```{r}
+tmlkmeansloess <- as.data.frame(fit_km_loess$centers)
+names(tmlkmeansloess) <- 1:288
+rownames(tmlkmeansloess) <- c("第1类簇均值","第2类簇均值")
+tmlkmeansloess$日期 <- rownames(tmlkmeansloess)
+tmlkmeansloess <- melt(tmlkmeansloess,id="日期")
+names(tmlkmeansloess) <- c("日期","时间序号","机动车当量")
+tmlkmeansloess$时间序号 <- as.numeric(tmlkmeansloess$时间序号)
+```
+
+```{r}
+group_k2 <- cutree(fit_hc_loess,k=2)
+group_k2 <- as.data.frame(group_k2)
+group_k2$日期 <- rownames(group_k2)
+tmlallloess <- merge(tmlallloess,group_k2,by="日期")
+tmlallloess$group_k2 <- as.factor(tmlallloess$group_k2)
+```
+
+```{r}
+str(tmlallloess)
+```
+
+
+```{r}
+ggplot(tmlallloess,aes(tmlallloess$时间序号,tmlallloess$loess,group=tmlallloess$日期,color=tmlallloess$group_k2))+
+  geom_line(alpha=3/5)+
+  geom_line(data=tmlkmeansloess,aes(tmlkmeansloess$时间序号,tmlkmeansloess$机动车当量,group=tmlkmeansloess$日期,color=tmlkmeansloess$日期),alpha=1,size=1)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("类别簇")+labs(title="SPAN=0.3")+
+  scale_x_continuous(breaks = seq(0,288,24),limits = c(0,288))+
+  scale_y_continuous(breaks = seq(0,120,20))
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\span0.3.jpg",width=7.29,height=4.5,dpi=600)
+```
+

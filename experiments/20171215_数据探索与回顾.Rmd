@@ -1,0 +1,270 @@
+---
+title: "20171215_thesis"
+author: "王致远"
+date: "2017年12月15日"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(plyr)
+```
+
+
+本实验主要任务在于:
+
+**回顾贵阳大数据比赛所用的数据集，探索数据集构成。**
+
+# 2016年10月数据
+
+## 数据整体信息
+
+```{r}
+flow201610 <- read.csv("D://data//thesis/201610/201610.csv",header = T)
+dim(flow201610)
+```
+
+```{r}
+names(flow201610)
+```
+
+```{r}
+summary(flow201610)
+```
+
+```{r}
+str(flow201610)
+```
+
+## 单变量考察
+
+### 观测站编号
+
+```{r}
+unique(flow201610$观测站编号)
+```
+
+一共有12个观测站编号
+
+```{r}
+table(flow201610$观测站编号)
+```
+
+每个观测站数据量并不一样大，每个观测站编号前四位是道路信息。
+
+```{r warning=FALSE}
+StationNumber <- as.character(unique(flow201610$观测站编号))
+StationNumber
+```
+
+高速公路道路信息如下：
+
+```{r}
+unique(substr(StationNumber,1,4))
+```
+
+有2个省道，6个国道。
+
+### 观测站名称
+
+```{r}
+unique(flow201610$观测站名称)
+```
+
+12个观测站，对应12个观测站编号。
+
+```{r}
+table(flow201610$观测站编号,flow201610$观测站名称)
+```
+
+观测站编号与观测站名称对应关系：
+
+G210L374522726  麻尾
+G320L026522223  南宁
+G320L412522630  台盘
+G320L460520222  平关站
+G321L101522633  丙妹
+G321L322522422  普宜
+G324L400522301  乌沙
+G326L226522228  黑水
+G326L260522427  黑石
+G75L197520322   松坎
+S01L001520111   桐木岭
+S207L202520325  平胜
+
+后续研究可只针对观测站名称
+
+### 日期
+
+```{r}
+unique(flow201610$日期)
+```
+
+日期跨度有27天，从2016年9月19日至2016年10月16日。
+
+但日期格式较为混乱，后续还需要整理。
+
+### 小时
+
+```{r}
+unique(flow201610$小时)
+```
+
+```{r}
+sort(unique(flow201610$小时))
+```
+
+24小时都有，但无0点，0点用24点表示。
+
+### 分钟
+
+```{r}
+sort(unique(flow201610$分钟))
+```
+
+### CDH
+
+```{r}
+unique(flow201610$CDH)
+```
+
+猜测CDH取几个离散取值可能和上下行有关系，也和观测站有关系。
+
+```{r}
+table(flow201610$观测站名称,flow201610$CDH)
+```
+
+南宁有6个，剩下的都是1个或2个。看来CDH的含义，可能是“车道号”。
+
+### 上下行方向
+
+```{r}
+unique(flow201610$上下行方向)
+```
+
+```{r}
+table(flow201610$上下行方向,flow201610$CDH)
+```
+
+猜测没有错，11/12/13是上行，31/32/33是下行。
+
+### 时间序号
+
+```{r}
+length(unique(flow201610$时间序号))
+```
+
+288个时间点
+
+```{r}
+60/5*24
+```
+
+每5min一个时间点。
+
+----
+
+### 交通流量
+
+```{r}
+subflow201610 <- flow201610[,9:17]
+dim(subflow201610)
+```
+
+```{r}
+names(subflow201610)
+```
+
+```{r}
+summary(subflow201610)
+```
+
+
+#### 箱线图
+
+```{r}
+boxplot(subflow201610)
+```
+
+可以看出中小客车和摩托车分布范围交广，中小客车在0~120范围都有分布，摩托车在0~80范围。其他车辆集中在0~20范围。
+
+```{r}
+boxplot(subflow201610,ylim=c(0,20))
+```
+```{r}
+names(subflow201610)
+```
+
+可以看出大客车、大货车、特大货车、集装箱、拖拉机，量都很少。大头还是中小客车。
+
+#### 条形图
+
+```{r}
+flowcolsums <- colSums(subflow201610)
+flowcolsums <- as.data.frame(flowcolsums)
+colnames(flowcolsums) <- "flow"
+flowcolsums$name <- rownames(flowcolsums)
+```
+
+```{r}
+ggplot(data=flowcolsums,aes(x=name,y=flow))+geom_bar(stat="identity")
+```
+
+#### 某一天某一站条形图
+
+查看某一天（例如10月1日）某一观测站（例如桐木岭）各类型的车数量对比条形图
+
+```{r}
+tml1001 <- subset(tmlall,日期=="01-10月-16")
+subtml1001 <- tml1001[,9:17]
+sumtml1001 <- colSums(subtml1001)
+sumtml1001 <- as.data.frame(sumtml1001)
+names(sumtml1001) <- "flow"
+sumtml1001$name <- rownames(sumtml1001)
+ggplot(sumtml1001,aes(x=name,y=flow))+geom_bar(stat="identity")
+```
+
+
+## 桐木岭数据
+
+接下来以桐木岭数据为研究对象。
+
+```{r}
+tmlall <- read.csv("D://data//thesis//201610/tmldata/tml.csv",header = T)
+dim(tmlall)
+```
+
+```{r}
+names(tmlall)
+```
+
+```{r}
+unique(tmlall$日期)
+```
+
+时间跨了23天。
+
+感兴趣的可能是在十一前后，每一日内各个车型交通流变化。考虑用ggplot2绘柱状图。
+
+```{r}
+subtml <- tmlall[,c(3,9:17)]
+temp <- ddply(subtml,~日期,summarise,sumflow=sum(中小客车)+1.5*sum(大客车)+sum(小货车)+1.5*sum(中货车)+3*sum(大货车)+4*sum(特大货车)+4*sum(集装箱)+1*sum(摩托车)+4*sum(拖拉机))
+temp <- rbind(temp[13:23,],temp[1:12,])
+rownames(temp) <- temp$日期
+temp$日期 <- factor(temp$日期,levels = rownames(temp))
+tmlsum <- temp
+```
+
+```{r}
+gplot1 <- ggplot(tmlsum,aes(x=日期,y=sumflow))+geom_bar(stat="identity",fill="steelblue")+
+  theme(axis.text.x = element_text(angle = 90))+
+  ylab("交通流换算当量")+
+  scale_y_continuous(breaks=seq(0, 13000, 2000))
+gplot1
+```
+
+```{r}
+ggsave(filename = "十一期间交通流变化柱状图.png",width=6,height=4,dpi=600)
+```
+
+由此图可以看出，"十一"期间，确实存在突变效应。

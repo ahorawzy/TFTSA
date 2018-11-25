@@ -1,0 +1,100 @@
+---
+title: "20180423_K近邻方法探索"
+author: "wzy"
+date: "2018年4月23日"
+output: html_document
+---
+
+## 《数据挖掘：R语言实战》中的K近邻
+
+```{r}
+rm(list=ls())
+```
+
+
+```{r}
+library(class)
+library(kknn)
+library(sampling)
+```
+
+### 读取数据
+
+使用kknn包的数据集miete。
+
+```{r}
+data("miete")
+dim(miete)
+```
+
+### 数据预处理
+
+分层抽样对5个等级抽取等量样本。计算每一等级应抽取的样本数
+
+```{r}
+n <- round(2/3*nrow(miete)/5)
+n
+```
+
+```{r}
+names(miete)
+```
+
+
+```{r}
+sub_train <- strata(miete,stratanames = "nmkat",size=rep(n,5),method = "srswor")
+```
+
+```{r}
+data_train <- miete[sub_train$ID_unit,c(-1,-3,-12)]
+data_test <- miete[-sub_train$ID_unit,c(-1,-3,-12)]
+```
+
+```{r}
+dim(data_train)
+```
+
+```{r}
+dim(data_test)
+```
+
+### K近邻
+
+按照次序向knn函数中一次放入训练集中各属性变量（除第12个变量nmkat）、测试集（除第12个变量nmkat）、训练集中的判别变量（第12个变量nmkat）
+
+```{r}
+names(data_train)
+```
+
+```{r}
+fit_pre_knn <- knn(data_train[,-12],data_test[,-12],cl=data_train[,12])
+fit_pre_knn
+```
+
+```{r}
+table(data_test$nmkat,fit_pre_knn)
+```
+
+输出错误率
+
+```{r}
+error_knn <- sum(as.numeric(as.numeric(fit_pre_knn)!=as.numeric(data_test$nmkat)))/nrow(data_test)
+error_knn
+```
+
+```{r}
+error_knn <- rep(0,20)
+for(i in 1:20){
+  fit_pre_knn=knn(data_train[,-12],data_test[,-12],cl=data_train[,12],k=i)
+  error_knn[i]=sum(as.numeric(as.numeric(fit_pre_knn)!=as.numeric(data_test$nmkat)))/nrow(data_test)
+}
+error_knn
+```
+
+```{r}
+plot(error_knn,type="b",xlab="K")
+```
+
+问题：class包的knn只能做分类问题，不能做回归问题。
+
+回归问题需要另外找思路，找包和函数。

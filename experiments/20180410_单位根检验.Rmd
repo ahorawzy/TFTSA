@@ -1,0 +1,146 @@
+---
+title: "20180410_单位根检验学习"
+author: "wzy"
+date: "2018年4月10日"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(TSA)
+library(fUnitRoots)
+```
+
+## 读取数据
+
+以10月1日交通流量作为分析对象
+
+```{r}
+tml1001all <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tml1001all.csv",header = T)
+dim(tml1001all)
+```
+
+```{r}
+names(tml1001all)
+```
+
+```{r}
+tml1001 <- tml1001all[,c(5,15)]
+names(tml1001)
+```
+
+```{r}
+flow1001 <- as.vector(tml1001$机动车当量)
+```
+
+## 时序图
+
+```{r}
+ggplot(data = tml1001,aes(x=tml1001$时间序号,y=tml1001$机动车当量))+
+  geom_point(colour="red")+
+  geom_line(colour="steelblue")+
+  geom_smooth(method = "loess",span=0.2)
+```
+
+从时序图可以看出，并不像是平稳序列。
+
+## ACF图
+
+```{r}
+acf(flow1001,xaxp=c(0,24,12))
+```
+
+ACF图，自相关系数也下降的非常缓慢，像是非平稳序列
+
+## 对原序列的ADF检验
+
+### 使用tseries包adf.test函数
+
+使用默认的滞后项k
+
+```{r}
+adf.test(flow1001)
+```
+
+不能拒绝原假设，即非平稳
+
+```{r}
+ar(flow1001)
+```
+
+利用AIC，k取6
+
+```{r}
+adf.test(flow1001,k=6)
+```
+
+
+### 使用fUnitRoots包中的adfTest函数
+
+#### 滞后项取1
+
+```{r}
+adfTest(flow1001,lags = 1,type = "c")
+```
+
+```{r}
+adfTest(flow1001,lags = 1,type = "nc")
+```
+
+```{r}
+adfTest(flow1001,lags = 1,type = "ct")
+```
+
+#### 滞后项取k
+
+```{r}
+for (i in 1:6){
+  for (j in c("nc","c","ct")){
+    print(adfTest(flow1001,lags=i,type=j))
+  }
+}
+```
+
+## 对差分后序列的ADF检验
+
+```{r}
+difflow1001 <- diff(flow1001)
+```
+
+### 使用tseries包adf.test
+
+```{r}
+adf.test(difflow1001)
+```
+
+拒绝原假设，接受备择假设，即序列平稳。
+
+```{r}
+ar(difflow1001)
+```
+
+利用对数据的一阶差分的AIC，得到k=14。
+
+```{r}
+adf.test(difflow1001,k=14)
+```
+
+拒绝原假设，接受备择假设，一阶差分后的序列平稳。
+
+一阶差分后的序列，类似于MA(1)模型，所以原序列是IMA(1,1)模型
+
+## 结论
+
+原序列为非平稳序列，一阶差分后为平稳序列。
+
+## 一阶差分的纯随机性分析
+
+```{r}
+Box.test(difflow1001,lag=6)
+```
+
+
+
+
+
+

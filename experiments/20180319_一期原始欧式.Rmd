@@ -1,0 +1,262 @@
+---
+title: "20180319_一期原始欧式"
+author: "wzy"
+date: "2018年3月19日"
+output: html_document
+---
+
+今天是使用聚类算法第一次实验，内容是：
+
+- 1.1.1.1 一期-原始数据-欧氏距离-层次聚类法;
+- 1.1.1.2 一期-原始数据-欧氏距离-K均值聚类法；
+- 1.1.1.3 一期-原始数据-欧氏距离-K中心点法；
+
+## 数据准备
+
+```{r}
+library(ggplot2)
+library(reshape2)
+library(mice)
+library(cluster)
+```
+
+```{r}
+tmlzz <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlzz.csv",header = T)
+dim(tmlzz)
+```
+
+```{r}
+rownames(tmlzz) <- tmlzz$X
+tmlzz <- tmlzz[,-1]
+dim(tmlzz)
+```
+
+## 1.1.1.1 层次聚类法尝试
+
+### 聚类
+
+```{r}
+fit_hc1 <- hclust(dist(tmlzz))
+print(fit_hc1)
+```
+
+```{r}
+plot(fit_hc1)
+```
+
+聚类效果似乎非常理想，将节假日和非节假日都分开了。
+
+对树进行剪枝，保留2类。
+
+```{r}
+group_k2 <- cutree(fit_hc1,k=2)
+group_k2 <- as.data.frame(group_k2)
+group_k2
+```
+
+聚类完全达到了预期效果。
+
+### 数据合并
+
+```{r}
+tmlallnew <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlallnew.csv",header = T)
+dim(tmlallnew)
+```
+
+```{r}
+names(tmlallnew)
+```
+
+```{r}
+group_k2$日期 <- rownames(group_k2)
+names(group_k2)
+```
+
+
+```{r}
+tmltotal <- merge(tmlallnew,group_k2,by="日期")
+dim(tmltotal)
+```
+
+```{r}
+table(tmltotal$是否为节假日,tmltotal$group_k2)
+```
+
+是节假日的都分到了1类，不是节假日的都分到了2类。
+
+```{r}
+names(tmltotal)
+```
+
+```{r}
+str(tmltotal)
+```
+
+```{r}
+tmltotal$group_k2 <- as.factor(tmltotal$group_k2)
+```
+
+```{r}
+names(tmltotal)[5] <- "层次聚类结果"
+names(tmltotal)
+```
+
+### 平行坐标图
+
+```{r}
+ggplot(tmltotal,aes(tmltotal$时间序号,tmltotal$机动车当量,group=tmltotal$日期,color=tmltotal$层次聚类结果))+
+  geom_line(alpha=1/5)+
+  geom_smooth(method = "loess",span=0.2,se = F)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("类别簇")+
+  scale_x_continuous(breaks = seq(0,288,24),limits = c(0,288))+
+  scale_y_continuous(breaks = seq(0,120,20))
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\原始欧式分层.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+虽然节假日和非节假日有噪音，但层次聚类仍然有很好的分离特性。
+
+## 1.1.1.2 K-均值聚类尝试
+
+### 处理一个缺失值
+
+```{r}
+sum(!complete.cases(tmlzz))
+```
+
+```{r}
+sum(is.na(tmlzz))
+```
+
+存在缺失值
+
+插补缺失值
+
+```{r}
+tmlzz[8,232] <- 28.625
+```
+
+```{r}
+sum(!complete.cases(tmlzz))
+```
+
+没有了缺失值
+
+### 聚类
+
+```{r}
+fit_km1 <- kmeans(tmlzz,centers = 2)
+fit_km1$cluster
+```
+
+可以看出，k均值聚类和层次聚类一样，能够完全区分节假日和非节假日。
+
+```{r}
+tmltotal$k均值聚类结果 <- tmltotal$层次聚类结果
+```
+
+### 聚类簇个数分析
+
+```{r}
+fit_km1$betweenss/fit_km1$totss
+```
+
+组间平方和占总平方和的39.2%，比较低，可以探索簇个数的取值特征。
+
+```{r}
+dim(tmlzz)
+```
+
+
+```{r}
+result=rep(0,20)
+for(k in 1:20){
+  fit_km <- kmeans(tmlzz,center=k)
+  result[k] <- fit_km$betweenss/fit_km$totss
+}
+round(result,2)
+plot(1:20,result,type="b",main="Choosing the Optimal Number of Cluster",
+     xlab="number of cluster: 1 to 20",ylab="betweenss/totss")
+axis(1,at=seq(1,20))
+#points(10,result[10],pch=16)
+#legend(10,result[10],paste("(10,",sprintf("%.1f%%",result[10]*100),")",sep=""),bty="n",xjust=0.3,cex=0.8)
+```
+
+可以看出类别簇个数从2到10基本平稳增加,说明节假日和非节假日两个簇内样本之间差异比较稳定，并没有其他明显的簇划分模式。
+
+### 数据合并
+
+将两类的簇平均值画到平行坐标图中
+
+```{r}
+tmlkmeans <- as.data.frame(fit_km1$centers)
+names(tmlkmeans) <- 1:288
+rownames(tmlkmeans) <- c("第1类簇均值","第2类簇均值")
+#tmltemp <- rbind(tmlkmeans,tmlzz)
+tmlkmeans$日期 <- rownames(tmlkmeans)
+tmlkmeans <- melt(tmlkmeans,id="日期")
+names(tmlkmeans) <- c("日期","时间序号","机动车当量")
+```
+
+```{r}
+tmlkmeans$时间序号 <- as.numeric(tmlkmeans$时间序号)
+```
+
+
+```{r}
+ggkmeans <- ggplot(tmlkmeans,aes(tmlkmeans$时间序号,tmlkmeans$机动车当量,group=tmlkmeans$日期,color=tmlkmeans$日期))+
+  geom_line(alpha=1/5)+
+  geom_smooth(method = "loess",span=0.2,se = F)+
+  xlab("时间序号")+ylab("车流量")+xlim(c(0,288))+
+  scale_color_brewer(palette="Set1")
+ggkmeans
+```
+
+```{r}
+ggplot(tmltotal,aes(tmltotal$时间序号,tmltotal$机动车当量,group=tmltotal$日期,color=tmltotal$层次聚类结果))+
+  geom_line(alpha=1/5)+
+  geom_line(data=tmlkmeans,aes(tmlkmeans$时间序号,tmlkmeans$机动车当量,group=tmlkmeans$日期,color=tmlkmeans$日期),alpha=1,size=1)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("类别簇")+
+  scale_x_continuous(breaks = seq(0,288,24),limits = c(0,288))+
+  scale_y_continuous(breaks = seq(0,120,20))
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\原始欧式K均值效果.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+
+## 1.1.1.3 K-中心点聚类尝试
+
+### 聚类
+
+```{r}
+fit_pam1 <- pam(tmlzz,2)
+print(fit_pam1)
+```
+
+K中心点聚类也得到了完全相同的结果，并找出了两个簇的中心点即代表。节假日的代表是9月30日，非节假日的代表是9月27日。
+
+### 数据合并
+
+```{r}
+tmlkmedoid <- as.data.frame(fit_pam1$medoids)
+names(tmlkmedoid) <- 1:288
+rownames(tmlkmedoid) <- c("第1类簇中心点","第2类簇中心点")
+#tmltemp <- rbind(tmlkmeans,tmlzz)
+tmlkmedoid$日期 <- rownames(tmlkmedoid)
+tmlkmedoid <- melt(tmlkmedoid,id="日期")
+names(tmlkmedoid) <- c("日期","时间序号","机动车当量")
+tmlkmedoid$时间序号 <- as.numeric(tmlkmedoid$时间序号)
+```
+
+### 平行坐标图
+
+```{r}
+ggplot(tmltotal,aes(tmltotal$时间序号,tmltotal$机动车当量,group=tmltotal$日期,color=tmltotal$层次聚类结果))+
+  geom_line(alpha=1/5)+
+  geom_line(data=tmlkmedoid,aes(tmlkmedoid$时间序号,tmlkmedoid$机动车当量,group=tmlkmedoid$日期,color=tmlkmedoid$日期),alpha=1,size=1)+
+  xlab("时间序号")+ylab("车流量")+scale_color_hue("类别簇")+
+  scale_x_continuous(breaks = seq(0,288,24),limits = c(0,288))+
+  scale_y_continuous(breaks = seq(0,120,20))
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\原始欧式K中心点.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+可以看出选出的中心点的效果较不稳定，相比来说，簇均值更加稳定。当数据没有极端值影响时，K均值法更加稳定。
+

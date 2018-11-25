@@ -1,0 +1,65 @@
+---
+title: "20180308_补缺失值和数据转置"
+author: "王致远"
+date: "2018年3月8日"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(reshape2)
+```
+
+
+今天实验的主要任务有：
+
+1. 补缺失值；
+2. 数据转置；
+
+## 填补缺失值
+
+其中缺失值已经在20180307的notebook中完成了，现在检验一下
+
+```{r}
+tmlallnew <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlallnew.csv",header = T)
+dim(tmlallnew)
+```
+
+```{r}
+table(tmlallnew$日期)
+```
+
+缺失值已经填补完了。
+
+## 数据转置
+
+```{r}
+names(tmlallnew)
+```
+
+```{r}
+tmldzz <- tmlallnew[,c(1,2,3)]
+names(tmldzz)
+```
+
+```{r}
+tmlzz <- dcast(tmldzz,tmldzz$日期~tmldzz$时间序号)
+dim(tmlzz)
+```
+
+```{r}
+rownames(tmlzz) <- tmlzz[,1]
+tmlzz <- tmlzz[,2:289]
+dim(tmlzz)
+```
+
+这样就算基本完成了数据转置，但数值好像有点问题。10月7日最后一个数值异常的大。
+
+通过观察图发现，可能以原始数据进行聚类效果不好，可以尝试应用LOESS后的值进行聚类。
+
+下一步就是研究R语言内的聚类算法了，特别是时间序列聚类。
+
+```{r}
+write.csv(tmlzz,"D:\\data\\thesis\\201610\\tmldata\\tmlzz.csv")
+```
+

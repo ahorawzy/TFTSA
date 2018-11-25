@@ -1,0 +1,56 @@
+---
+title: "20180320_其他距离探索"
+author: "wzy"
+date: "2018年3月20日"
+output: html_document
+---
+
+本实验还是用一期-原始数据-层次聚类法做实验。
+
+与20180319不同的是，本实验探索其他距离度量在分层聚类法中的可行性。
+
+```{r}
+library(ggplot2)
+library(reshape2)
+library(mice)
+library(cluster)
+```
+
+```{r}
+tmlzz <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlzz.csv",header = T)
+rownames(tmlzz) <- tmlzz$X
+tmlzz <- tmlzz[,-1]
+dim(tmlzz)
+```
+
+## manhattan距离
+
+```{r}
+fit_hc_manhattan <- hclust(dist(tmlzz,method = "manhattan"))
+plot(fit_hc_manhattan)
+```
+
+使用manhattan距离也可以正确聚类，但聚类效果跟euclidean距离不同
+
+## maximum距离
+
+```{r}
+fit_hc_maximum <- hclust(dist(tmlzz,method = "maximum"))
+plot(fit_hc_maximum)
+```
+
+maximum距离将10月5日和10月6日错误分类了。
+
+## canberra距离
+
+```{r}
+fit_hc_canberra <- hclust(dist(tmlzz,method = "canberra"))
+plot(fit_hc_canberra)
+```
+
+canberra距离完全正确分类了
+
+## 构建一种新的距离
+
+不仅仅考虑到
+

@@ -1,0 +1,115 @@
+---
+title: "20171222实验——绘制十一前后单日交通流图"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+```
+
+本实验主要为小论文提供支撑。绘制十一前后某两个单日的交通流量图。
+
+## 20170919绘图
+
+```{r}
+tml0919 <- read.csv("D://data//thesis//201610/tmldata/tml0919_2.csv",header = T)
+dim(tml0919)
+```
+
+```{r}
+qplot(x = 时间序号,y = 机动车当量,data=tml0919)+geom_line(color="steelblue")+
+  geom_smooth()+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))
+```
+
+**发现没有10月7号之后的，索性干脆重新拆分数据，这次尝试批量拆分。**
+
+## 拆分数据集
+
+读取桐木岭所有数据
+
+```{r}
+tml <- read.csv("D://data//thesis//201610//tmldata//tml.csv",header = T)
+dim(tml)
+```
+
+```{r}
+unique(tml$日期)
+```
+
+有23个日期
+
+首先增加一列，换算当量
+
+```{r}
+tml$机动车当量 <- 1*tml$中小客车+1*tml$小货车+1.5*tml$大客车+1.5*tml$中货车+3*tml$大货车+4*tml$特大货车+4*tml$集装箱+1*tml$摩托车+4*tml$拖拉机
+```
+
+拆分数据集
+
+```{r}
+dataname <- 1:23
+for(i in 1:length(unique(tml$日期))){
+  dataname[i] <- paste("tml",substr(strsplit(as.character(unique(tml$日期)[i]),'-')[[1]][2],1,2),strsplit(as.character(unique(tml$日期)[i]),'-')[[1]][1],sep="")
+}
+```
+
+```{r}
+for(i in 1:length(unique(tml$日期))){
+  write.csv(subset(tml,日期==as.character(unique(tml$日期)[i])),file=paste("D://data//thesis/201610//new//",dataname[i],".csv",sep=""))
+}
+```
+
+文件写入成功！
+
+----
+
+读取10月12日
+
+```{r}
+tml1012 <- read.csv("D://data//thesis//201610/new/tml1012.csv",header = T)
+dim(tml1012)
+```
+
+数据合并尝试
+
+实验结束，开始写通用函数
+
+```{r}
+transf <- function(filename){
+  df <- read.csv(paste("D://data//thesis//201610/new//",filename,".csv",sep=""),header = T)
+  dfS <- subset(df,上下行方向=="S")
+  dfX <- subset(df,上下行方向=="X")
+  # 上行方向合并
+  dfS11 <- subset(dfS,CDH==11)
+  dfS12 <- subset(dfS,CDH==12)
+  dfSall <- dfS11
+  for(i in 10:19) dfSall[,i]=dfS11[,i]+dfS12[,i]
+  # 下行方向合并
+  dfX31 <- subset(dfX,CDH==31)
+  dfX32 <- subset(dfX,CDH==32)
+  dfXall <- dfX31
+  for(i in 10:19) dfXall[,i]=dfX31[,i]+dfX32[,i]
+  # 上下行合并
+  dfall <- dfSall
+  for(i in 10:19) dfall[,i]=dfSall[,i]+dfXall[,i]
+  # 排序
+  dfall <- dfall[order(dfall$分钟),]
+  dfall <- dfall[order(dfall$小时),]
+  # 筛选变量
+  dfall <- dfall[,-c(1,2)]
+  write.csv(dfall,paste("D://data//thesis//201610/new/",filename,"all.csv",sep=""))
+}
+```
+
+
+```{r}
+for(i in 1:length(unique(tml$日期))){
+  transf(dataname[i])
+}
+```
+
+ 
+
+

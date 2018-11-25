@@ -1,0 +1,301 @@
+---
+title: "20180528_支持5.2节写作"
+author: "wzy"
+date: "2018年5月28日"
+output: html_document
+---
+
+
+```{r}
+library(ggplot2)
+library(TFTSA)
+```
+
+
+## 1. 读取数据
+
+```{r}
+tmlzzloess <- read.csv("D://data//thesis//201610//tmlzzloess.csv",header = T)
+tmlzznew <- read.csv("D://data//thesis//201610//tmlzznew.csv",header = T)
+
+rownames(tmlzzloess) <- tmlzzloess[,1]
+tmlzzloess <- tmlzzloess[,-1]
+rownames(tmlzznew) <- tmlzznew[,1]
+tmlzznew <- tmlzznew[,-1]
+```
+
+## 2. 设定object flow和flow database
+
+### 2.1 将flow database设为原始数据
+
+```{r}
+tmlobj <- tmlzznew[6,]
+tmlbase <- tmlzznew[-6,]
+```
+
+```{r}
+pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12,
+                           save_detail = "D:\\王致远\\论文\\大论文\\实验\\detail1.csv")
+```
+
+```{r}
+(forecast_raw <- flow_forecastplot(tmlobj,pre1006))
+```
+
+```{r}
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\K近邻原始数据预测.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+
+```{r}
+flow_evaluate(tmlobj,pre1006)
+```
+
+不必要的波动很大，这种微小波动可能没用。
+
+### 2.2 将flow database设为LOESS后的数据
+
+```{r}
+tmlobj <- tmlzznew[6,]
+tmlbase <- tmlzzloess[-6,]
+```
+
+```{r}
+pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12,
+                           save_detail = "D:\\王致远\\论文\\大论文\\实验\\detail2.csv")
+```
+
+```{r}
+flow_forecastplot(tmlobj,pre1006)
+```
+
+```{r}
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\K近邻LOESS数据预测.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+
+```{r}
+flow_evaluate(tmlobj,pre1006)
+```
+
+
+可以看到除了不光滑外，预测效果整体良好。就是对于高峰值预测偏低。
+
+## 3. 残差分析
+
+### 3.1 0均值性
+
+```{r}
+res1006 <- tmlobj[73:288] - pre1006[73:288]
+x <- plot(73:288,res1006)
+x <- abline(h=0)
+```
+
+
+
+
+### 3.2 正态性
+
+```{r}
+qqnorm(res1006)
+qqline(res1006)
+```
+
+### 3.3 自相关性
+
+```{r}
+res1006 <- as.numeric(res1006)
+acf(res1006)
+```
+
+### 3.4 纯随机性
+
+```{r}
+Box.test(res1006)
+```
+
+## 4. 参数的灵敏度分析
+
+### 4.1 关于k的灵敏度分析
+
+```{r}
+pre1006_k5 <- flow_knn(tmlobj,tmlbase,start = 73,k = 5,lag_duration = 24,fore_duration = 12)
+```
+
+```{r}
+flow_forecastplot(tmlobj,pre1006_k5)
+```
+
+```{r}
+flow_evaluate(tmlobj,pre1006_k5)
+```
+
+#### 4.1.1 参数取值检验
+
+```{r}
+opti_k <- function(from,to){
+  result <- data.frame(matrix(NA,10,3))
+  for(i in 2:10){
+    pre_k <- flow_knn(tmlobj,tmlbase,start = 73,k = i,lag_duration = 24,fore_duration = 12)
+    result[i,1:3] <- flow_evaluate(tmlobj,pre_k)
+  }
+  result <- na.omit(result)
+  names(result) <- c("mse","rmse","mae")
+  return(result)
+}
+```
+
+```{r}
+optik <- opti_k()
+```
+
+```{r}
+write.csv(optik,file="D:\\王致远\\论文\\大论文\\实验\\结果表\\optik.csv")
+```
+
+
+
+### 4.2 关于lag_duration的灵敏度分析
+
+#### 4.2.1 ld4
+
+```{r}
+pre1006_ld4 <- flow_knn(tmlobj,tmlbase,start = 73,k=3,lag_duration = 4,fore_duration = 12)
+```
+
+```{r}
+flow_forecastplot(tmlobj,pre1006_ld4)
+```
+
+```{r}
+ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\K近邻参数ld4.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+
+```{r}
+flow_evaluate(tmlobj,pre1006_ld4)
+```
+
+#### 4.2.2 ld36
+
+```{r}
+pre1006_ld36 <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 36,fore_duration = 12)
+```
+
+```{r}
+flow_forecastplot(tmlobj,pre1006_ld36)
+```
+
+```{r}
+flow_evaluate(tmlobj,pre1006_ld36)
+```
+
+
+#### 4.2.3 ld48
+
+```{r}
+pre1006_ld48 <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12)
+```
+
+```{r}
+flow_forecastplot(tmlobj,pre1006_ld48)
+```
+
+```{r}
+flow_evaluate(tmlobj,pre1006_ld48)
+```
+
+#### 4.2.4 参数取值检验
+
+```{r}
+opti_ld <- function(from,to){
+  result <- data.frame(matrix(NA,10,3))
+  for(i in seq(from,to,2)){
+    pre_k <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = i,fore_duration = 12)
+    result[i,1:3] <- flow_evaluate(tmlobj,pre_k)
+  }
+  result <- na.omit(result)
+  names(result) <- c("mse","rmse","mae")
+  return(result)
+}
+```
+
+```{r}
+optild <- opti_ld(4,48)
+```
+
+```{r}
+write.csv(optild,file="D:\\王致远\\论文\\大论文\\实验\\结果表\\optild.csv")
+```
+
+
+
+### 4.3 关于fore_duration的灵敏度分析
+
+#### 4.3.1 fd6
+
+```{r}
+pre1006_fd6 <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 6)
+```
+
+```{r}
+flow_forecastplot(tmlobj,pre1006_fd6)
+```
+
+```{r}
+flow_evaluate(tmlobj,pre1006_fd6)
+```
+
+
+#### 4.3.2 fd4
+
+```{r}
+pre1006_fd4 <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 4)
+```
+
+```{r}
+flow_forecastplot(tmlobj,pre1006_fd4)
+```
+
+```{r}
+flow_evaluate(tmlobj,pre1006_fd4)
+```
+
+
+#### 4.3.3 fd2
+
+```{r}
+pre1006_fd2 <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 2)
+```
+
+```{r}
+flow_forecastplot(tmlobj,pre1006_fd2)
+```
+
+```{r}
+flow_evaluate(tmlobj,pre1006_fd2)
+```
+
+#### 4.3.4 参数取值检验
+
+
+```{r}
+opti_fd <- function(from,to){
+  result <- data.frame(matrix(NA,20,3))
+  for(i in seq(from,to,4)){
+    pre_fd <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = i)
+    result[i,1:3] <- flow_evaluate(tmlobj,pre_fd)
+  }
+  result <- na.omit(result)
+  names(result) <- c("mse","rmse","mae")
+  return(result)
+}
+```
+
+```{r}
+pre_fd <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 27,
+                  save_detail = "D:\\王致远\\论文\\大论文\\实验\\结果表\\fd27.csv")
+```
+
+
+
