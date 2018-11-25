@@ -1,0 +1,63 @@
+---
+title: "20181019_draw_example_illustration"
+author: "wzy"
+date: "2018年10月19日"
+output: html_document
+---
+
+```{r}
+library(TFTSA)
+library(reshape2)
+library(ggplot2)
+library(dplyr)
+```
+
+
+```{r}
+rm(list=ls())
+load("D:\\R\\packages\\TFTSA\\data-raw\\tmlzznew.RData")
+load("D:\\R\\packages\\TFTSA\\data-raw\\tmlzzloess.RData")
+```
+
+```{r}
+colnames(tmlzzloess) <- 1:288
+```
+
+```{r}
+tmlzzloess$day <- rownames(tmlzzloess)
+```
+
+
+```{r}
+x <- melt(tmlzzloess,id.vars = "day") %>% arrange(day)
+```
+
+```{r}
+ggplot(x,aes(variable,value,group=day,colour=day))+geom_point()+geom_line()
+```
+
+```{r}
+rownames(tmlzzloess)
+```
+
+```{r}
+subtml <- tmlzzloess[c(13,21,4,5,6),]
+subtml$day <- c("Sep 20th","Sep 30th","Oct 4th","Oct 5th","Oct 6th")
+```
+
+```{r}
+subx <- melt(subtml,id.vars = "day") %>% arrange(day)
+subx$variable <- as.numeric(subx$variable)
+```
+
+```{r}
+ggplot(subx,aes(variable,value,group=day,colour=day))+geom_point()+geom_line()+
+  ggplot2::xlab("Timestamp")+ggplot2::ylab("Traffic flow rate")+
+  ggplot2::scale_x_continuous(breaks = seq(0,288,24))+
+  ggplot2::scale_y_continuous(breaks = seq(0,120,20))
+```
+
+```{r}
+ggsave("D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\绘图\\example_illustration.jpg",width=7.29,height=4.5,dpi=600)
+```
+
