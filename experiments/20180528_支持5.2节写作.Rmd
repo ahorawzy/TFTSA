@@ -35,7 +35,7 @@ tmlbase <- tmlzznew[-6,]
 
 ```{r}
 pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12,
-                           save_detail = "D:\\王致远\\论文\\大论文\\实验\\detail1.csv")
+                           save_detail = "D:\\交大云同步\\论文\\大论文\\实验\\detail1.csv")
 ```
 
 ```{r}
@@ -43,7 +43,7 @@ pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,for
 ```
 
 ```{r}
-ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\K近邻原始数据预测.jpg",width=7.29,height=4.5,dpi=600)
+ggsave("D:\\交大云同步\\论文\\大论文\\实验\\绘图\\K近邻原始数据预测.jpg",width=7.29,height=4.5,dpi=600)
 ```
 
 
@@ -62,7 +62,7 @@ tmlbase <- tmlzzloess[-6,]
 
 ```{r}
 pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12,
-                           save_detail = "D:\\王致远\\论文\\大论文\\实验\\detail2.csv")
+                           save_detail = "D:\\交大云同步\\论文\\大论文\\实验\\detail2.csv")
 ```
 
 ```{r}
@@ -70,7 +70,7 @@ flow_forecastplot(tmlobj,pre1006)
 ```
 
 ```{r}
-ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\K近邻LOESS数据预测.jpg",width=7.29,height=4.5,dpi=600)
+ggsave("D:\\交大云同步\\论文\\大论文\\实验\\绘图\\K近邻LOESS数据预测.jpg",width=7.29,height=4.5,dpi=600)
 ```
 
 
@@ -150,7 +150,7 @@ optik <- opti_k()
 ```
 
 ```{r}
-write.csv(optik,file="D:\\王致远\\论文\\大论文\\实验\\结果表\\optik.csv")
+write.csv(optik,file="D:\\交大云同步\\论文\\大论文\\实验\\结果表\\optik.csv")
 ```
 
 
@@ -168,7 +168,7 @@ flow_forecastplot(tmlobj,pre1006_ld4)
 ```
 
 ```{r}
-ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\K近邻参数ld4.jpg",width=7.29,height=4.5,dpi=600)
+ggsave("D:\\交大云同步\\论文\\大论文\\实验\\绘图\\K近邻参数ld4.jpg",width=7.29,height=4.5,dpi=600)
 ```
 
 
@@ -225,7 +225,7 @@ optild <- opti_ld(4,48)
 ```
 
 ```{r}
-write.csv(optild,file="D:\\王致远\\论文\\大论文\\实验\\结果表\\optild.csv")
+write.csv(optild,file="D:\\交大云同步\\论文\\大论文\\实验\\结果表\\optild.csv")
 ```
 
 
@@ -294,7 +294,7 @@ opti_fd <- function(from,to){
 
 ```{r}
 pre_fd <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 27,
-                  save_detail = "D:\\王致远\\论文\\大论文\\实验\\结果表\\fd27.csv")
+                  save_detail = "D:\\交大云同步\\论文\\大论文\\实验\\结果表\\fd27.csv")
 ```
 
 
