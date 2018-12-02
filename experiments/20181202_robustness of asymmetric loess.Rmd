@@ -33,8 +33,7 @@ tmlbase <- tmlzznew[-6,]
 ```
 
 ```{r}
-pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12,
-                           save_detail = "D:\\交大云同步\\论文\\大论文\\实验\\detail1.csv")
+pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12)
 ```
 
 ```{r}
@@ -53,8 +52,7 @@ tmlbase <- tmlzzloess[-6,]
 ```
 
 ```{r}
-pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12,
-                           save_detail = "D:\\交大云同步\\论文\\大论文\\实验\\detail2.csv")
+pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12)
 ```
 
 ```{r}
@@ -69,8 +67,7 @@ flow_evaluate(tmlobj,pre1006)
 ### 2.3 非对称预测
 
 ```{r}
-pre_imbalance <- flow_knn(obj = tmlobj,base = tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12,
-                          save_detail = "D:\\交大云同步\\论文\\大论文\\实验\\结果表\\imbalance2.csv",imbalance=T)
+pre_imbalance <- flow_knn(obj = tmlobj,base = tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12,imbalance=T)
 ```
 
 ```{r}
@@ -120,6 +117,11 @@ optik
 ```
 
 ```{r}
+write.csv(optik,"D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\实验结果\\optik.csv")
+```
+
+
+```{r}
 opti_k_im <- function(from,to){
   result <- data.frame(matrix(NA,10,4))
   for(i in 2:10){
@@ -130,9 +132,14 @@ opti_k_im <- function(from,to){
   names(result) <- c("mse","rmse","mae","imse")
   return(result)
 }
-optik_im <- opti_k_imE()
+optik_im <- opti_k_im()
 optik_im
 ```
+
+```{r}
+write.csv(optik_im,"D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\实验结果\\optik_im.csv")
+```
+
 
 ### 3.2 关于lag_duration的鲁棒性检验
 
@@ -155,6 +162,11 @@ optild
 ```
 
 ```{r}
+write.csv(optild,"D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\实验结果\\optild.csv")
+```
+
+
+```{r}
 opti_ld_im <- function(from,to){
   result <- data.frame(matrix(NA,10,4))
   for(i in seq(from,to,2)){
@@ -171,6 +183,11 @@ opti_ld_im <- function(from,to){
 optild_im <- opti_ld_im(4,48)
 optild_im
 ```
+
+```{r}
+write.csv(optild_im,"D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\实验结果\\optild_im.csv")
+```
+
 
 ### 3.3 关于forecasting_duration的鲁棒性检验
 
@@ -195,11 +212,16 @@ optifd
 ```
 
 ```{r}
+write.csv(optifd,"D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\实验结果\\optifd.csv")
+```
+
+
+```{r}
 opti_fd_im <- function(from,to){
   result <- data.frame(matrix(NA,20,4))
   for(i in seq(from,to,2)){
     try({
-      pre_fd <- flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = i,imbalance = T)
+      pre_fd <- flow_knn(tmlobj,tmlbase,start = 73,k = 5,lag_duration = 30,fore_duration = i,imbalance = T)
       result[i,1:4] <- flow_evaluate(tmlobj,pre_fd)
     })
   }
@@ -214,12 +236,19 @@ optifd_im <- opti_fd_im(2,48)
 optifd_im
 ```
 
+
+```{r}
+write.csv(optifd_im,"D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\实验结果\\optifd_im.csv")
+```
+
+
 ### 3.4 最佳参数选择
 
 ```{r}
 opt_best <- flow_knn(tmlobj,tmlbase,start = 73,k=5,lag_duration = 30, fore_duration = 12, imbalance = T)
 flow_evaluate(tmlobj,opt_best)
 ```
+
 
 ```{r}
 preall <- rbind(tmlobj,pre1006,opt_best)
@@ -236,3 +265,8 @@ ggplot(preall,aes(1:288,preall$real))+geom_point(colour="steelblue")+geom_line(c
   scale_x_continuous(breaks = seq(0,288,24))+
   scale_y_continuous(breaks = seq(0,120,20))
 ```
+
+```{r}
+ggsave(file="D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\绘图\\对称非对称对比图.jpg",width=7.29,height=4.5,dpi=600)
+```
+
