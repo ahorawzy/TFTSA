@@ -263,10 +263,11 @@ ggplot(preall,aes(1:288,preall$real))+geom_point(colour="steelblue")+geom_line(c
   geom_line(aes(1:288,preall$imbalance),colour="red",size=1)+
   xlab("Timestamp")+ylab("Traffic flow rate")+
   scale_x_continuous(breaks = seq(0,288,24))+
-  scale_y_continuous(breaks = seq(0,120,20))
+  scale_y_continuous(breaks = seq(0,120,20))+
+  theme_bw()
 ```
 
 ```{r}
-ggsave(file="D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\绘图\\对称非对称对比图.jpg",width=7.29,height=4.5,dpi=600)
+ggsave(file="D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\绘图\\对称非对称对比图2.jpg",width=7.29,height=4.5,dpi=600)
 ```
 

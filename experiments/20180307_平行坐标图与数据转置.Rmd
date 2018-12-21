@@ -35,6 +35,19 @@ ggplot(tmljjr,aes(tmljjr$时间序号,tmljjr$机动车当量,group=tmljjr$日期,color=tmlj
   xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")
 ```
 
+```{r}
+ggplot(tmljjr,aes(tmljjr$时间序号,tmljjr$机动车当量,group=tmljjr$日期,color=tmljjr$日期))+geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  xlab("Timestamp")+ylab("Traffic Volume")+scale_color_hue("Date")+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  theme_bw()
+```
+
+```{r}
+ggsave(file="D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\绘图\\节假日.jpg",width=7.29,height=4.5,dpi=600)
+```
+
 ### 非节假日全
 
 ```{r}
@@ -83,10 +96,25 @@ ggplot(tmlfjjrnew,aes(tmlfjjrnew$时间序号,tmlfjjrnew$机动车当量,group=tmlfjjrnew
   xlab("时间序号")+ylab("车流量")+scale_color_hue("日期")+
   scale_x_continuous(breaks = seq(0,288,24))+
   scale_y_continuous(breaks = seq(0,120,20))
-ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\非节假日交通流除930.jpg",width=7.29,height=4.5,dpi=600)
+#ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\非节假日交通流除930.jpg",width=7.29,height=4.5,dpi=600)
 ```
 
 基本可以反映问题了
+
+```{r}
+ggplot(tmlfjjrnew,aes(tmlfjjrnew$时间序号,tmlfjjrnew$机动车当量,group=tmlfjjrnew$日期,color=tmlfjjrnew$日期))+geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  xlab("Timestamp")+ylab("Traffic volume")+scale_color_hue("日期")+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  theme_bw()
+#ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\非节假日交通流除930.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+```{r}
+ggsave(file="D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\绘图\\非节假日.jpg",width=7.29,height=4.5,dpi=600)
+```
+
 
 ### 各类的均值线
 

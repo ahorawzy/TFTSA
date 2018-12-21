@@ -39,12 +39,17 @@ pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,for
 ```
 
 ```{r}
-(forecast_raw <- flow_forecastplot(tmlobj,pre1006))
+(forecast_raw <- flow_forecastplot(tmlobj,pre1006)+theme_bw())
 ```
 
 ```{r}
 ggsave("D:\\交大云同步\\论文\\大论文\\实验\\绘图\\K近邻原始数据预测.jpg",width=7.29,height=4.5,dpi=600)
 ```
+
+```{r}
+ggsave("D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\绘图\\K近邻原始数据预测.jpg",width=7.29,height=4.5,dpi=600)
+```
+
 
 
 ```{r}
@@ -66,13 +71,16 @@ pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,for
 ```
 
 ```{r}
-flow_forecastplot(tmlobj,pre1006)
+flow_forecastplot(tmlobj,pre1006)+theme_bw()
 ```
 
 ```{r}
 ggsave("D:\\交大云同步\\论文\\大论文\\实验\\绘图\\K近邻LOESS数据预测.jpg",width=7.29,height=4.5,dpi=600)
 ```
 
+```{r}
+ggsave("D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\绘图\\K近邻LOESS数据预测.jpg",width=7.29,height=4.5,dpi=600)
+```
 
 ```{r}
 flow_evaluate(tmlobj,pre1006)
