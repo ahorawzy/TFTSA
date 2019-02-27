@@ -34,12 +34,11 @@ tmlbase <- tmlzznew[-6,]
 ```
 
 ```{r}
-pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12,
-                           save_detail = "D:\\交大云同步\\论文\\大论文\\实验\\detail1.csv")
+pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 22,fore_duration = 6)
 ```
 
 ```{r}
-(forecast_raw <- flow_forecastplot(tmlobj,pre1006)+theme_bw())
+flow_forecastplot(tmlobj,pre1006)+theme_bw()
 ```
 
 ```{r}
@@ -80,7 +79,7 @@ tmlbase <- tmlzzloess[-6,]
 ```
 
 ```{r}
-pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12,
+pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 22,fore_duration = 6,
                            save_detail = "D:\\交大云同步\\论文\\大论文\\实验\\detail2.csv")
 ```
 
