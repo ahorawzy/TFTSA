@@ -1,0 +1,89 @@
+---
+title: "20190301_preprocessing01"
+author: "wzy"
+date: "2019年3月1日"
+output: html_document
+---
+
+# 熟悉数据
+
+```{r}
+library(TFTSA)
+library(tidyverse)
+```
+
+```{r}
+jd201610 <- read.csv("D:\\data\\thesis\\201610\\201610.csv",stringsAsFactors = F)
+dim(jd201610)
+```
+
+```{r}
+names(jd201610)
+```
+
+给变量改名字
+
+```{r}
+names(jd201610) <- c("station_index","station_name","date","hour","minute","CDH","SX",
+                     "timestamp","small_pass_car","big_pass_car","small_fre_car",
+                     "mid_fre_car","big_fre_car","large_fre_car","box_car","mt_car","tlj_car")
+```
+
+
+```{r}
+table(jd201610$CDH,jd201610$SX)
+```
+
+车道号11,12,13属于上行方向；车道号31,32,33属于下行方向
+
+```{r}
+head(jd201610,10)
+```
+
+```{r}
+unique(jd201610$station_name)
+```
+
+一共有12个观测站
+
+```{r}
+table(jd201610$station_name)
+```
+
+黑水/乌沙数据量不够充足，可以剔除
+
+```{r}
+jd201610 <- filter(jd201610,station_name != "黑水",station_name != "乌沙")
+unique(jd201610$station_name)
+```
+
+```{r}
+dim(jd201610)
+```
+
+数据量减少了不到1万行
+
+```{r}
+table(jd201610$station_name,jd201610$date)
+```
+
+10月13/14/15/16的数据，除了松坎观测站外，普遍缺失。
+
+# 数据预处理
+
+## 日期的处理
+
+```{r}
+unique(jd201610$date)
+```
+
+以“-”为分隔符，拆分字符串
+
+```{r}
+str_split("19-9月 -16","-")
+```
+
+```{r}
+str_split(jd201610$date,"-") %>% as.data.frame() %>% t() %>% head(20)
+```
+
