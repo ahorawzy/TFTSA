@@ -5,6 +5,11 @@ date: "2019年3月1日"
 output: html_document
 ---
 
+```{r}
+rm(list=ls())
+```
+
+
 # 熟悉数据
 
 ```{r}
@@ -173,9 +178,9 @@ jdzzl <- lapply(jdzzl, function(x) {
 rowSums(is.na(x))
 ```
 
-#### 剔除缺失值
+#### 缺失值剔除
 
-剔除缺失值在15个以上的
+剔除缺失值在15个以上的日期
 
 ```{r}
 rowSums(is.na(x)) < 15
@@ -188,11 +193,15 @@ x <- x[date_order,]
 x <- x[rowSums(is.na(x)) < 15,]
 ```
 
+#### 展开矩阵
+
 ```{r}
 y <- as.matrix(x)
 y <- t(y)
 y <- as.vector(y)
 ```
+
+#### 缺失值插补
 
 ```{r}
 na_loc <- which(is.na(y))
@@ -200,5 +209,119 @@ notna_loc <- which(!is.na(y))
 for(i in na_loc){
   y[i] <- mean(y[notna_loc[which(abs(i-notna_loc)<5)]])
 }
+```
+
+#### 重构矩阵
+
+```{r}
+y <- matrix(y,ncol = 288,byrow = T)
+#y <- as.data.frame(matrix(y,ncol = 288,byrow = T))
+rownames(y) <- rownames(x)
+colnames(y) <- 1:288
+y <- as.data.frame(y)
+```
+
+```{r}
+rm(x,y)
+```
+
+
+### 拓展到全数据集
+
+#### 缺失值识别
+
+```{r}
+lapply(jdzzl, function(x) rowSums(is.na(x)))
+```
+
+#### 缺失值剔除
+
+```{r}
+jdzzl <- lapply(jdzzl, function(x){
+  x <- x[date_order,]
+  x <- x[rowSums(is.na(x))<15,]
+})
+```
+
+```{r}
+lapply(jdzzl, function(x) rowSums(is.na(x)))
+```
+
+#### 展开矩阵
+
+```{r}
+jdzzl <- lapply(jdzzl, function(x){
+  x <- as.matrix(x)
+  y <- t(x)
+  y <- as.vector(y)
+})
+```
+
+
+#### 缺失值插补
+
+```{r}
+jdzzl_try <- jdzzl
+fillupna <- function(y){
+  na_loc <- which(is.na(y))
+  notna_loc <- which(!is.na(y))
+  for(i in na_loc){
+    y[i] <- mean(y[notna_loc[which(abs(i-notna_loc)<7)]])
+  }
+  return(y)
+}
+jdzzl_try <- lapply(jdzzl_try, fillupna)
+lapply(jdzzl_try, function(x) sum(is.na(x)))
+```
+
+```{r}
+jdzzl <- lapply(jdzzl,function(y){
+  na_loc <- which(is.na(y))
+  notna_loc <- which(!is.na(y))
+  for(i in na_loc){
+    y[i] <- mean(y[notna_loc[which(abs(i-notna_loc)<7)]])
+  }
+  return(y)
+})
+lapply(jdzzl, function(x) sum(is.na(x)))
+```
+
+### 步骤整合
+
+```{r message=FALSE}
+jdzzl <- plyr::dlply(jd201610tt,"station_name",
+                     function(x) reshape2::dcast(x,date~timestamp))
+jdzzl <- lapply(jdzzl, function(x) {
+  rownames(x) <- x[[1]]
+  x <- x[-1]
+})
+```
+
+```{r}
+jdzzl <- lapply(jdzzl, function(x){
+  
+  # 缺失值剔除
+  x <- x[date_order,]
+  x <- x[rowSums(is.na(x))<15,]
+  
+  # 展开矩阵
+  x <- as.matrix(x)
+  dates <- rownames(x)
+  x <- t(x)
+  x <- as.vector(x)
+  
+  # 缺失值插补
+  na_loc <- which(is.na(x))
+  notna_loc <- which(!is.na(x))
+  for(i in na_loc){
+    x[i] <- mean(x[notna_loc[which(abs(i-notna_loc)<7)]])
+  }
+  
+  # 重构矩阵
+  x <- matrix(x,ncol = 288,byrow = T)
+  rownames(x) <- dates
+  colnames(x) <- 1:288
+  return(x)
+})
 ```
 
