@@ -63,27 +63,142 @@ dim(jd201610)
 
 数据量减少了不到1万行
 
-```{r}
-table(jd201610$station_name,jd201610$date)
-```
-
 10月13/14/15/16的数据，除了松坎观测站外，普遍缺失。
 
 # 数据预处理
 
 ## 日期的处理
 
-```{r}
-unique(jd201610$date)
-```
-
 以“-”为分隔符，拆分字符串
 
 ```{r}
-str_split("19-9月 -16","-")
+str_split_todf <- function(strvec,sep){
+  tep <- strsplit(strvec,sep)
+  len <- length(tep[[1]])
+  return(as.data.frame(matrix(unlist(tep),ncol=len,byrow = T),stringsAsFactors=F))
+}
 ```
 
 ```{r}
-str_split(jd201610$date,"-") %>% as.data.frame() %>% t() %>% head(20)
+jd201610 <- cbind(jd201610,str_split_todf(jd201610$date,"-"))
+names(jd201610)[18:20] <- c("day","month","year")
+```
+
+
+```{r}
+jd201610[jd201610$month=="9月 ",19] <- "Sep"
+jd201610[jd201610$month=="10月",19] <- "Oct"
+```
+
+```{r}
+jd201610 <- mutate(jd201610,date=str_c(month,day,sep = "-"))
+jd201610 <- select(jd201610,-(day:year))
+```
+
+```{r}
+date_order <- unique(jd201610$date)
+date_order
+```
+
+```{r}
+head(jd201610)
+```
+
+```{r}
+names(jd201610)
+```
+
+## 当量计算
+
+```{r}
+jd201610 <- mutate(jd201610,
+                   volume=small_pass_car+small_fre_car+
+                     1.5*big_pass_car+1.5*mid_fre_car+
+                     3*big_fre_car+4*large_fre_car+4*box_car+
+                     mt_car+tlj_car) %>% 
+  select(station_index:timestamp,volume) %>% 
+  select(-(hour:minute))
+names(jd201610)
+```
+
+```{r eval=FALSE}
+save(jd201610,file="D:\\data\\jd201610.RData")
+```
+
+## 分组加合
+
+```{r}
+by_timestamp <- group_by(jd201610,station_name,date,timestamp)
+jd201610tt <- summarise(by_timestamp,ttvolume=sum(volume,na.rm = T))
+head(jd201610tt)
+```
+
+## 数据转置
+
+```{r}
+unique(jd201610tt$station_name)
+```
+
+### 桐木岭实验
+
+```{r}
+tml <- filter(jd201610tt,station_name=="桐木岭站")
+tml <- arrange(tml, date, timestamp)
+x <- reshape2::dcast(tml,date~timestamp)
+rownames(x) <- x[[1]]
+x <- x[-1]
+```
+
+### 拓展到全数据集
+
+```{r message=FALSE}
+jdzzl <- plyr::dlply(jd201610tt,"station_name",
+                     function(x) reshape2::dcast(x,date~timestamp))
+```
+
+```{r}
+jdzzl <- lapply(jdzzl, function(x) {
+  rownames(x) <- x[[1]]
+  x <- x[-1]
+})
+```
+
+## 插补缺失值
+
+### 桐木岭实验
+
+#### 缺失值识别
+
+```{r}
+rowSums(is.na(x))
+```
+
+#### 剔除缺失值
+
+剔除缺失值在15个以上的
+
+```{r}
+rowSums(is.na(x)) < 15
+```
+
+按日期排序，并剔除缺失值多的日期
+
+```{r}
+x <- x[date_order,]
+x <- x[rowSums(is.na(x)) < 15,]
+```
+
+```{r}
+y <- as.matrix(x)
+y <- t(y)
+y <- as.vector(y)
+```
+
+```{r}
+na_loc <- which(is.na(y))
+notna_loc <- which(!is.na(y))
+for(i in na_loc){
+  y[i] <- mean(y[notna_loc[which(abs(i-notna_loc)<5)]])
+}
 ```
 
