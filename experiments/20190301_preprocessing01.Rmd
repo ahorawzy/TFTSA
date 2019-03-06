@@ -10,7 +10,7 @@ rm(list=ls())
 ```
 
 
-# 熟悉数据
+# 1. 熟悉数据
 
 ```{r}
 library(TFTSA)
@@ -70,9 +70,9 @@ dim(jd201610)
 
 10月13/14/15/16的数据，除了松坎观测站外，普遍缺失。
 
-# 数据预处理
+# 2. 数据预处理
 
-## 日期的处理
+## 2.1 日期的处理
 
 以“-”为分隔符，拆分字符串
 
@@ -113,7 +113,7 @@ head(jd201610)
 names(jd201610)
 ```
 
-## 当量计算
+## 2.2 当量计算
 
 ```{r}
 jd201610 <- mutate(jd201610,
@@ -130,7 +130,7 @@ names(jd201610)
 save(jd201610,file="D:\\data\\jd201610.RData")
 ```
 
-## 分组加合
+## 2.3 分组加合
 
 ```{r}
 by_timestamp <- group_by(jd201610,station_name,date,timestamp)
@@ -138,7 +138,7 @@ jd201610tt <- summarise(by_timestamp,ttvolume=sum(volume,na.rm = T))
 head(jd201610tt)
 ```
 
-## 数据转置
+## 2.4 数据转置
 
 ```{r}
 unique(jd201610tt$station_name)
@@ -168,7 +168,7 @@ jdzzl <- lapply(jdzzl, function(x) {
 })
 ```
 
-## 插补缺失值
+## 2.5 插补缺失值
 
 ### 桐木岭实验
 
@@ -324,4 +324,85 @@ jdzzl <- lapply(jdzzl, function(x){
   return(x)
 })
 ```
+
+## 2.6 LOESS平滑处理
+
+曾经使用的原始版的handle_loess
+
+```{r}
+handle_loess <- function(df,exp,resp,sp){
+  result <- rep(NA,nrow(df))
+  result <- stats::loess(df[,resp]~df[,exp],span=sp)
+  return(result$fitted)
+}
+```
+
+这个handle_loess有一些问题：
+
+1. 该步骤是在转置之前做的，而现在已经对数据做了转置；要考虑是再开发个转置之后的版本，还是继续放在转置之前；
+2. 对数据框形式要求的局限性较大，按loess的原理，理论上只需要vector型输入即可。
+
+### 桐木岭实验
+
+```{r}
+names(jdzzl)
+x <- jdzzl[[10]]
+```
+
+#### 绘制平行坐标图
+
+```{r}
+reshape2::melt(x) %>% arrange(Var1,Var2) %>% 
+  ggplot(aes(x = Var2, y = value, group = Var1, color = Var1))+
+  geom_line()+
+  labs(x="timestamp",y="traffic volume")
+```
+
+#### 开发LOESS函数
+
+```{r}
+handle_loess_fordf <- function(df,sp){
+  ndays <- nrow(df)
+  timestamps <- 1:ncol(df)
+  for(i in 1:ndays){
+    loess_result <- stats::loess(df[i,]~timestamps,span=sp)
+    df[i,] <- loess_result$fitted
+  }
+  return(df)
+}
+```
+
+```{r}
+smoothed_x <- handle_loess_fordf(x,sp=0.2)
+```
+
+```{r}
+reshape2::melt(smoothed_x) %>% arrange(Var1,Var2) %>% 
+  ggplot(aes(x = Var2, y = value, group = Var1, color = Var1))+
+  geom_line()+
+  labs(x="timestamp",y="traffic volume")
+```
+
+```{r}
+rm(x)
+```
+
+
+### 拓展到全数据集
+
+```{r}
+jdzzl_loess <- lapply(jdzzl, handle_loess_fordf, sp=0.2)
+```
+
+检验
+
+```{r}
+reshape2::melt(jdzzl_loess[[10]]) %>% arrange(Var1,Var2) %>% 
+  ggplot(aes(x = Var2, y = value, group = Var1, color = Var1))+
+  geom_line()+
+  labs(x="timestamp",y="traffic volume")
+```
+
+没什么问题，将jdzzl和jdzzl_loess写入包中
+
 
