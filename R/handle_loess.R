@@ -10,13 +10,15 @@
 #' @seealso \code{\link[stats]{loess}}
 #'
 #' @param df The dataFrame contains series to be loess.
-#' @param exp The sequence column number of explaining variable.
-#' @param resp The sequence column number of response variable.
 #' @param sp Span parameter of loess() function.
 #' @export
-
-handle_loess <- function(df,exp,resp,sp){
-  result <- rep(NA,nrow(df))
-  result <- stats::loess(df[,resp]~df[,exp],span=sp)
-  return(result$fitted)
+#'
+handle_loess_fordf <- function(df,sp){
+  ndays <- nrow(df)
+  timestamps <- 1:ncol(df)
+  for(i in 1:ndays){
+    loess_result <- stats::loess(df[i,]~timestamps,span=sp)
+    df[i,] <- loess_result$fitted
+  }
+  return(df)
 }
