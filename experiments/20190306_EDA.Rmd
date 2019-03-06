@@ -1,0 +1,138 @@
+---
+title: "20190306_EDA"
+author: "wzy"
+date: "2019年3月6日"
+output: html_document
+---
+
+```{r echo=FALSE,message=FALSE,warning=FALSE}
+library(tidyverse)
+library(TFTSA)
+```
+
+
+# Analysis of patterns of traffic volume.
+
+## Temporal Analysis
+
+```{r}
+tml <- jdzzl[[10]]
+tml_loess <- jdzzl_loess[[10]]
+```
+
+```{r}
+tml_long <- reshape2::melt(tml)
+names(tml_long) <- c("Date","Timestamp","Traffic_volume")
+tml_long <- arrange(tml_long,Date,Timestamp)
+head(tml_long)
+```
+
+```{r}
+holiday <- unique(tml_long$Date)[9:16]
+```
+
+```{r}
+tml_long$Holiday <- ifelse(tml_long$Date %in% holiday, TRUE, FALSE)
+head(tml_long)
+```
+
+```{r}
+ggplot(tml_long,aes(x=Timestamp,y=Traffic_volume,group=Date,color=Holiday))+
+  geom_line()
+```
+
+```{r}
+by_holiday <- group_by(tml_long,Holiday,Timestamp)
+summarise(by_holiday,Mean_traffic_volume=mean(Traffic_volume)) %>% 
+  ggplot(aes(x=Timestamp,y=Mean_traffic_volume,group=Holiday,color=Holiday))+
+  geom_line(size=1)+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  theme_bw()
+```
+
+### Holiday
+
+```{r}
+filter(tml_long,Holiday == T) %>% 
+  ggplot(aes(x=Timestamp,y=Traffic_volume,group=Date,color=Date))+
+  geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  theme_bw()
+```
+
+### Not-holiday
+
+```{r}
+filter(tml_long,Holiday == F) %>% 
+  ggplot(aes(x=Timestamp,y=Traffic_volume,group=Date,color=Date))+
+  geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1)+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  theme_bw()
+```
+
+## Spatio-temporal Analysis
+
+Melt every data frame in list.
+
+```{r}
+jdzzl_long <- lapply(jdzzl, function(x){
+  x <- reshape2::melt(x)
+  names(x) <- c("Date","Timestamp","Traffic_volume")
+  x <- arrange(x,Date,Timestamp)
+  x$Holiday <- ifelse(x$Date %in% holiday, T, F)
+  x$Holiday <- as.factor(x$Holiday)
+  by_holiday <- group_by(x,Holiday,Timestamp)
+  x <- summarise(by_holiday,Mean_traffic_volume=mean(Traffic_volume))
+  return(x)
+})
+```
+
+### Holiday
+
+```{r}
+merge_list <- function(bywhat){
+  function(df1,df2){
+    merge(df1,df2,by=bywhat)
+  }
+}
+tep_list <- lapply(jdzzl_long,filter,Holiday == T)
+tep_list <- lapply(tep_list,`[`,c(2,3))
+merged_list <- Reduce(merge_list(bywhat = "Timestamp"),tep_list)
+names(merged_list)[2:11] <- names(jdzzl_long)
+merged_df <- merged_list[,c(1,2,3,5,6,9,10,11)]
+names(merged_df)[c(5:6,8)] <- c("平关","松坎","桐木岭")
+reshape2::melt(merged_df, id.vars="Timestamp", variable.name="Station", value.name="Mean_traffic_volume") %>% 
+  ggplot(aes(x=Timestamp,y=Mean_traffic_volume,group=Station,color=Station))+
+  geom_line(size=1)+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  theme_bw()
+```
+
+```{r}
+rm(tep_list,merged_list,merged_df)
+```
+
+
+### Not-holiday
+
+```{r}
+tep_list <- lapply(jdzzl_long,filter,Holiday == F)
+tep_list <- lapply(tep_list,`[`,c(2,3))
+merged_list <- Reduce(merge_list(bywhat = "Timestamp"),tep_list)
+names(merged_list)[2:11] <- names(jdzzl_long)
+merged_df <- merged_list[,c(1,2,3,5,6,9,10,11)]
+names(merged_df)[c(5:6,8)] <- c("平关","松坎","桐木岭")
+reshape2::melt(merged_df, id.vars="Timestamp", variable.name="Station", value.name="Mean_traffic_volume") %>% 
+  ggplot(aes(x=Timestamp,y=Mean_traffic_volume,group=Station,color=Station))+
+  geom_line(size=1)+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  theme_bw()
+```
+
