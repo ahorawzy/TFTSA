@@ -5,7 +5,7 @@
 #' LOESS (locally weighted regression) is a technique which can smooth a series. It
 #' needs a explaining variable as exp, a response variable as resp, a parameter span.
 #' By using loess() function in stats package, this function can caculate LOESS value
-#' for a series from a dataframe.
+#' for every row in the input dataframe.
 #'
 #' @seealso \code{\link[stats]{loess}}
 #'
