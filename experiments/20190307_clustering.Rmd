@@ -1,0 +1,102 @@
+---
+title: "20190307_clustering"
+author: "wzy"
+date: "2019Äê3ÔÂ7ÈÕ"
+output: html_document
+---
+
+```{r message=FALSE,warning=FALSE}
+rm(list=ls())
+library(tidyverse)
+library(TFTSA)
+options(digits = 3)
+```
+
+```{r}
+data("jdzzl","jdzzl_loess")
+```
+
+## TML experiment
+
+### Raw data - Hierarchical clustering - Euclidean
+
+```{r}
+tml <- jdzzl[[10]]
+tml_loess <- jdzzl_loess[[10]]
+```
+
+```{r}
+fit_hc1 <- hclust(dist(tml))
+fit_hc1
+```
+
+```{r}
+plot(fit_hc1)
+```
+
+```{r}
+group_k2 <- cutree(fit_hc1,k=2)
+group_k2 <- as.data.frame(group_k2)
+group_k2$group_k2 <- factor(group_k2$group_k2)
+group_k2$Date <- rownames(group_k2)
+```
+
+```{r}
+tml_long <- reshape2::melt(tml)
+names(tml_long) <- c("Date","Timestamp","Traffic_volume")
+tml_long <- merge(tml_long,group_k2,by="Date")
+tml_long <- arrange(tml_long,Date,Timestamp)
+ggplot(tml_long,aes(x=Timestamp,y=Traffic_volume,Group=Date,color=group_k2))+
+  geom_line(alpha=0.4)+
+  geom_smooth(span=0.2,se = F)+
+  labs(color="Cluster")+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  theme_bw()
+```
+
+```{r eval=FALSE}
+ggsave(file="plot/04_raw_hc_eu.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+
+### Raw data - Kmeans - Euclidean
+
+```{r}
+fit_km1 <- kmeans(tml,centers = 2)
+fit_km1$cluster
+```
+
+```{r}
+fit_km1$betweenss/fit_km1$totss
+```
+
+```{r}
+result=rep(0,19)
+for(k in 2:19){
+  fit_km <- kmeans(tml,center=k)
+  result[k] <- fit_km$betweenss/fit_km$totss
+}
+round(result,2)
+plot(1:19,result,type="b",main="Choosing the Optimal Number of Cluster",
+     xlab="number of cluster: 1 to 20",ylab="betweenss/totss")
+axis(1,at=seq(1,19))
+```
+
+```{r}
+fit_km1_center <- reshape2::melt(fit_km1$centers)
+names(fit_km1_center) <- c("Center_of_cluster","Timestamp","Traffic_volume")
+fit_km1_center$Center_of_cluster <- factor(abs(fit_km1_center$Center_of_cluster-3))
+fit_km1_center$Center_of_cluster <- factor(fit_km1_center$Center_of_cluster)
+ggplot(data=tml_long,aes(x=Timestamp,y=Traffic_volume,Group=Date,color=group_k2))+
+  geom_line(alpha=0.2)+
+  geom_line(data=fit_km1_center,aes(x=Timestamp,y=Traffic_volume,Group=Center_of_cluster,color=Center_of_cluster),size=1)+
+  labs(color="Centers of clusters")+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  theme_bw()
+```
+
+```{r eval=FALSE}
+ggsave(file="plot/04_raw_km_eu.jpg",width=7.29,height=4.5,dpi=600)
+```
