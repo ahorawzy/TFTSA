@@ -32,7 +32,7 @@ tmlbase <- tmlzzloess[-6,]
 选择预测序列为10月6日，其余的序列作为样本库
 
 ```{r}
-pre_imbalance <- flow_knn(obj = tmlobj,base = tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12,
+pre_imbalance <- flow_knn(obj = tmlobj,base = tmlbase,start = 73,k = 5,lag_duration = 30,fore_duration = 8,
                           save_detail = "D:\\交大云同步\\论文\\大论文\\实验\\结果表\\imbalance2.csv",imbalance=T)
 ```
 
@@ -59,7 +59,7 @@ x <- abline(h=0)
 ### 对称预测与非对称预测对比图
 
 ```{r}
-pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 24,fore_duration = 12)
+pre1006 <- TFTSA::flow_knn(tmlobj,tmlbase,start = 73,k = 3,lag_duration = 22,fore_duration = 6)
 ```
 
 ```{r}
@@ -72,14 +72,14 @@ preall <- melt(preall,id.vars = "timestamp")
 ggplot(preall,aes(x=timestamp,y=value,group=variable,color=variable))+
   geom_line()+geom_point()+
   scale_colour_manual(values=c("steelblue","orange","red"))+
-  xlab("Timestamp")+ylab("Traffic flow volume")+labs(color="Legend")+
+  xlab("Timestamp")+ylab("Traffic volume")+labs(color="Legend")+
   scale_x_continuous(breaks = seq(0,288,24))+
   scale_y_continuous(breaks = seq(0,120,20))+
   theme_bw()
 ```
 
 ```{r eval=FALSE}
-ggsave("D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\绘图\\K近邻全家福2.jpg",width=7.29,height=4.5,dpi=600)
+ggsave("D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\绘图\\K近邻全家福2V2.jpg",width=7.29,height=4.5,dpi=600)
 ```
 
 ```{r}
