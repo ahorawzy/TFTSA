@@ -31,8 +31,15 @@ fit_hc1
 ```
 
 ```{r}
+jpeg("plot/04_raw_hc_eu_tree.jpeg")
+plot(fit_hc1)
+dev.off()
+```
+
+```{r}
 plot(fit_hc1)
 ```
+
 
 ```{r}
 group_k2 <- cutree(fit_hc1,k=2)
@@ -79,7 +86,7 @@ for(k in 2:19){
 }
 round(result,2)
 plot(1:19,result,type="b",main="Choosing the Optimal Number of Cluster",
-     xlab="number of cluster: 1 to 20",ylab="betweenss/totss")
+     xlab="number of cluster: 1 to 20",ylab="betweenss / totss")
 axis(1,at=seq(1,19))
 ```
 
@@ -132,6 +139,10 @@ ggplot(tml_long,aes(x=Timestamp,y=Traffic_volume,Group=Date,color=group_k2))+
   theme_bw()
 ```
 
+```{r eval=FALSE}
+ggsave(file="plot/04_loess_hc_eu.jpg",width=7.29,height=4.5,dpi=600)
+```
+
 ### Loess - Kmeans - Euclidean
 
 ```{r}
@@ -160,29 +171,10 @@ ggplot(data=tml_long,aes(x=Timestamp,y=Traffic_volume,Group=Date,color=group_k2)
   theme_bw()
 ```
 
-### Loess - Hierarchical - Enhanced
-
-```{r}
-fit_hc3 <- hclust(enhanced_euclidean(tml_loess,0.5,0.5))
-plot(fit_hc3)
+```{r eval=FALSE}
+ggsave(file="plot/04_loess_km_eu.jpg",width=7.29,height=4.5,dpi=600)
 ```
 
-```{r}
-group_k3 <- cutree(fit_hc3,k=3)
-group_k3 <- as.data.frame(group_k3)
-group_k3$group_k3 <- factor(group_k3$group_k3)
-group_k3$Date <- rownames(group_k3)
-tml_long <- reshape2::melt(tml_loess)
-names(tml_long) <- c("Date","Timestamp","Traffic_volume")
-tml_long <- merge(tml_long,group_k3,by="Date")
-tml_long <- arrange(tml_long,Date,Timestamp)
-ggplot(tml_long,aes(x=Timestamp,y=Traffic_volume,Group=Date,color=group_k3))+
-  geom_line(alpha=1,size=1.1)+
-  labs(color="Cluster")+
-  scale_x_continuous(breaks = seq(0,288,24))+
-  scale_y_continuous(breaks = seq(0,120,20))+
-  theme_bw()
-```
 
 ### Raw data - Hierarchical - Enhanced
 
@@ -208,3 +200,34 @@ ggplot(tml_long,aes(x=Timestamp,y=Traffic_volume,Group=Date,color=group_k3))+
   theme_bw()
 ```
 
+```{r eval=FALSE}
+ggsave(file="plot/04_raw_hc_en.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+### Loess - Hierarchical - Enhanced
+
+```{r}
+fit_hc3 <- hclust(enhanced_euclidean(tml_loess,0.5,0.5))
+plot(fit_hc3)
+```
+
+```{r}
+group_k3 <- cutree(fit_hc3,k=3)
+group_k3 <- as.data.frame(group_k3)
+group_k3$group_k3 <- factor(group_k3$group_k3)
+group_k3$Date <- rownames(group_k3)
+tml_long <- reshape2::melt(tml_loess)
+names(tml_long) <- c("Date","Timestamp","Traffic_volume")
+tml_long <- merge(tml_long,group_k3,by="Date")
+tml_long <- arrange(tml_long,Date,Timestamp)
+ggplot(tml_long,aes(x=Timestamp,y=Traffic_volume,Group=Date,color=group_k3))+
+  geom_line(alpha=1,size=1.1)+
+  labs(color="Cluster")+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  theme_bw()
+```
+
+```{r eval=FALSE}
+ggsave(file="plot/04_loess_hc_en.jpg",width=7.29,height=4.5,dpi=600)
+```
