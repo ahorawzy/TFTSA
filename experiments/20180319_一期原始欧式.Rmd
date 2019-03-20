@@ -14,20 +14,16 @@ output: html_document
 ## 数据准备
 
 ```{r}
+library(TFTSA)
 library(ggplot2)
 library(reshape2)
-library(mice)
+#library(mice)
 library(cluster)
 ```
 
 ```{r}
-tmlzz <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlzz.csv",header = T)
-dim(tmlzz)
-```
-
-```{r}
-rownames(tmlzz) <- tmlzz$X
-tmlzz <- tmlzz[,-1]
+tmlzz <- read.csv("D:\\data\\thesis\\201610\\tmlzznew.csv",header = T)
+tmlzz <- jdzzl[[10]]
 dim(tmlzz)
 ```
 
@@ -59,7 +55,7 @@ group_k2
 ### 数据合并
 
 ```{r}
-tmlallnew <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tmlallnew.csv",header = T)
+tmlallnew <- read.csv("D:\\data\\thesis\\201610\\tmlallnew.csv",header = T)
 dim(tmlallnew)
 ```
 
@@ -110,7 +106,6 @@ ggplot(tmltotal,aes(tmltotal$时间序号,tmltotal$机动车当量,group=tmltotal$日期,co
   xlab("时间序号")+ylab("车流量")+scale_color_hue("类别簇")+
   scale_x_continuous(breaks = seq(0,288,24),limits = c(0,288))+
   scale_y_continuous(breaks = seq(0,120,20))
-ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\原始欧式分层.jpg",width=7.29,height=4.5,dpi=600)
 ```
 
 虽然节假日和非节假日有噪音，但层次聚类仍然有很好的分离特性。
@@ -238,7 +233,7 @@ K中心点聚类也得到了完全相同的结果，并找出了两个簇的中心点即代表。节假日的代表是9
 ```{r}
 tmlkmedoid <- as.data.frame(fit_pam1$medoids)
 names(tmlkmedoid) <- 1:288
-rownames(tmlkmedoid) <- c("第1类簇中心点","第2类簇中心点")
+rownames(tmlkmedoid) <- c("Cluster 1","Cluster 2")
 #tmltemp <- rbind(tmlkmeans,tmlzz)
 tmlkmedoid$日期 <- rownames(tmlkmedoid)
 tmlkmedoid <- melt(tmlkmedoid,id="日期")
@@ -252,11 +247,14 @@ tmlkmedoid$时间序号 <- as.numeric(tmlkmedoid$时间序号)
 ggplot(tmltotal,aes(tmltotal$时间序号,tmltotal$机动车当量,group=tmltotal$日期,color=tmltotal$层次聚类结果))+
   geom_line(alpha=1/5)+
   geom_line(data=tmlkmedoid,aes(tmlkmedoid$时间序号,tmlkmedoid$机动车当量,group=tmlkmedoid$日期,color=tmlkmedoid$日期),alpha=1,size=1)+
-  xlab("时间序号")+ylab("车流量")+scale_color_hue("类别簇")+
+  xlab("Timestamp")+ylab("Traffic_volume")+scale_color_hue("Medoide")+
   scale_x_continuous(breaks = seq(0,288,24),limits = c(0,288))+
-  scale_y_continuous(breaks = seq(0,120,20))
-ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\原始欧式K中心点.jpg",width=7.29,height=4.5,dpi=600)
+  scale_y_continuous(breaks = seq(0,120,20))+
+  theme_bw()
 ```
 
 可以看出选出的中心点的效果较不稳定，相比来说，簇均值更加稳定。当数据没有极端值影响时，K均值法更加稳定。
 
+```{r eval=FALSE}
+ggsave(file="plot/04_raw_me_eu.jpg",width=7.29,height=4.5,dpi=600)
+```
