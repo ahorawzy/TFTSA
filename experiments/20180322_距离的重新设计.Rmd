@@ -151,12 +151,12 @@ $$d_{ab}=\sqrt{\sum_{i=1}^n(x_i-y_i)^2}$$
 ```{r}
 x <- seq(0,8,1)
 y <- -(x-4)**2+100
-z1 <- y-40
-z2 <- c(50,60,80,75,70,65,70,80,60)
-plot(x,y,type="b",ylim = c(0,100),pch=16)
-lines(x,z1,col="red",type = "b",pch=15)
-lines(x,z2,col="blue",type = "b",pch=17)
-legend("bottomright",title = "traffic flow",legend=c("y","z1","z2"),pch=c(16,15,17),col=c("black","red","blue"))
+y1 <- y-40
+y2 <- c(50,60,80,75,70,65,70,80,60)
+plot(x,y,type="b",ylim = c(0,100),pch=16,xlab = "",ylab="")
+lines(x,y1,col="red",type = "b",pch=15)
+lines(x,y2,col="blue",type = "b",pch=17)
+legend("bottomright",title = "traffic flow",legend=c("y","y1","y2"),pch=c(16,15,17),col=c("black","red","blue"))
 ```
 
 z1ÓëyµÄÅ·ÊÏ¾àÀë
