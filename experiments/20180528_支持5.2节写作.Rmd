@@ -122,7 +122,7 @@ flow_evaluate(tmlobj,pre1006)
 
 ```{r}
 res1006 <- tmlobj[73:288] - pre1006[73:288]
-x <- plot(73:288,res1006)
+x <- plot(73:288,res1006,xlab = "Timestamp",ylab="residual")
 x <- abline(h=0)
 ```
 
