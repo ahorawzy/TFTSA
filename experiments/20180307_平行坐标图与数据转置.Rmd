@@ -36,8 +36,9 @@ ggplot(tmljjr,aes(tmljjr$时间序号,tmljjr$机动车当量,group=tmljjr$日期,color=tmlj
 ```
 
 ```{r}
-ggplot(tmljjr,aes(tmljjr$时间序号,tmljjr$机动车当量,group=tmljjr$日期,color=tmljjr$日期))+geom_line(alpha=2/5)+
-  geom_smooth(method = "loess",span=0.1)+
+ggplot(tmljjr,aes(tmljjr$时间序号,tmljjr$机动车当量,group=tmljjr$日期,color=tmljjr$日期))+
+  # geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1,se = F)+
   xlab("Timestamp")+ylab("Traffic Volume")+scale_color_hue("Date")+
   scale_x_continuous(breaks = seq(0,288,24))+
   scale_y_continuous(breaks = seq(0,120,20))+
@@ -103,8 +104,9 @@ ggplot(tmlfjjrnew,aes(tmlfjjrnew$时间序号,tmlfjjrnew$机动车当量,group=tmlfjjrnew
 基本可以反映问题了
 
 ```{r}
-ggplot(tmlfjjrnew,aes(tmlfjjrnew$时间序号,tmlfjjrnew$机动车当量,group=tmlfjjrnew$日期,color=tmlfjjrnew$日期))+geom_line(alpha=2/5)+
-  geom_smooth(method = "loess",span=0.1)+
+ggplot(tmlfjjrnew,aes(tmlfjjrnew$时间序号,tmlfjjrnew$机动车当量,group=tmlfjjrnew$日期,color=tmlfjjrnew$日期))+
+  # geom_line(alpha=2/5)+
+  geom_smooth(method = "loess",span=0.1, se = FALSE)+
   xlab("Timestamp")+ylab("Traffic volume")+scale_color_hue("日期")+
   scale_x_continuous(breaks = seq(0,288,24))+
   scale_y_continuous(breaks = seq(0,120,20))+
