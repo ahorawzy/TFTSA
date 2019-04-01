@@ -22,15 +22,17 @@ flow_forecastplot <- function(rv,pv){
     df <- rbind(rv,pv)
     df <- t(df)
     df <- as.data.frame(df)
-    names(df) <- c("real","forecast")
+    df[3] <- 1:288
+    names(df) <- c("real","forecast","timestamp")
+    df <- reshape2::melt(df,id.vars="timestamp")
 
-    forecastplot <- ggplot2::ggplot(df,ggplot2::aes(1:288,df$"real"))+
-      ggplot2::geom_point(colour="steelblue")+
-      ggplot2::geom_line(colour="steelblue")+
-      ggplot2::geom_line(ggplot2::aes(1:288,df$"forecast"),colour="red",size=1)+
-      ggplot2::xlab("Timestamp")+ggplot2::ylab("Traffic flow rate")+
-      ggplot2::scale_x_continuous(breaks = seq(0,288,24))+
-      ggplot2::scale_y_continuous(breaks = seq(0,120,20))
+    forecastplot <- ggplot2::ggplot(df,ggplot2::aes(x=timestamp,y=value,group=variable,color=variable))+
+      geom_point()+geom_line()+
+      scale_color_manual(values=c("steelblue","red"))+
+      xlab("Timestamp")+ylab("Traffic volume")+labs(color="Legend")+
+      scale_x_continuous(breaks = seq(0,288,24))+
+      scale_y_continuous(breaks = seq(0,120,20))+
+      theme_bw()
 
     return(forecastplot)
 }
