@@ -65,6 +65,11 @@ ggsave("D:\\交大云同步\\论文\\大论文\\实验\\绘图\\K近邻原始数据预测.jpg",width=7
 ggsave("D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\绘图\\K近邻原始数据预测V2.jpg",width=7.29,height=4.5,dpi=600)
 ```
 
+```{r eval=FALSE}
+ggsave(file="plot/05_balance_raw.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+
 ```{r}
 flow_evaluate(tmlobj,pre1006)
 ```
@@ -107,6 +112,10 @@ ggsave("D:\\交大云同步\\论文\\大论文\\实验\\绘图\\K近邻LOESS数据预测.jpg",width=
 
 ```{r eval=FALSE}
 ggsave("D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\绘图\\K近邻LOESS数据预测V2.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+```{r eval=FALSE}
+ggsave(file="plot/05_balance_loess.jpg",width=7.29,height=4.5,dpi=600)
 ```
 
 ```{r}
@@ -202,9 +211,14 @@ pre1006_ld4 <- flow_knn(tmlobj,tmlbase,start = 73,k=3,lag_duration = 4,fore_dura
 flow_forecastplot(tmlobj,pre1006_ld4)
 ```
 
-```{r}
+```{r eval=FALSE}
 ggsave("D:\\交大云同步\\论文\\大论文\\实验\\绘图\\K近邻参数ld4.jpg",width=7.29,height=4.5,dpi=600)
 ```
+
+```{r eval=FALSE}
+ggsave(file="plot/05_lag_duration_4min.jpg",,width=7.29,height=4.5,dpi=600)
+```
+
 
 
 ```{r}

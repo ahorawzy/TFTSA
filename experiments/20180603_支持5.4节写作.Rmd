@@ -44,6 +44,10 @@ flow_forecastplot(tmlobj,pre_imbalance)
 ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\K近邻imbalance预测.jpg",width=7.29,height=4.5,dpi=600)
 ```
 
+```{r eval=FALSE}
+ggsave(file="plot/05_imbalance_loess.jpg",width=7.29,height=4.5,dpi=600)
+```
+
 ```{r}
 flow_evaluate(tmlobj,pre_imbalance)
 ```
@@ -82,7 +86,12 @@ ggplot(preall,aes(x=timestamp,y=value,group=variable,color=variable))+
 ggsave("D:\\交大云同步\\论文\\小论文\\4_基于KNN方法的短时交通流序列非对称损失预测\\绘图\\K近邻全家福2V2.jpg",width=7.29,height=4.5,dpi=600)
 ```
 
-```{r}
+```{r eval=FALSE}
+ggsave(file="plot/05_balance_imbalance_loess.jpg",width=7.29,height=4.5,dpi=600)
+```
+
+
+```{r eval=FALSE}
 ggplot(preall,aes(1:288,preall$real))+geom_point(colour="steelblue")+geom_line(colour="steelblue")+
   geom_line(aes(1:288,preall$balance),colour="orange",size=1)+
   geom_line(aes(1:288,preall$imbalance),colour="red",size=1)+
