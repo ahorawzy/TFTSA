@@ -10,13 +10,13 @@ output: html_document
 ## 读取数据
 
 ```{r}
-library(TSA)
+library(TFTSA)
 library(forecast)
 library(ggplot2)
 ```
 
 ```{r}
-tml1001all <- read.csv("D:\\data\\thesis\\201610\\tmldata\\tml1001all.csv",header = T)
+tml1001all <- read.csv("D:\\data\\thesis\\201610\\tml1001all.csv",header = T)
 dim(tml1001all)
 ```
 
@@ -110,7 +110,7 @@ names(fit1df)
 ```
 
 ```{r}
-write.csv(fit1df,"D:\\data\\thesis\\201610\\tmldata\\fitarima.csv")
+#write.csv(fit1df,"D:\\data\\thesis\\201610\\tmldata\\fitarima.csv")
 ```
 
 
@@ -119,13 +119,32 @@ ggplot(fit1df,aes(x=fit1df$时间序号,y=fit1df$机动车流量))+
   geom_point(colour="steelblue")+
   geom_line(colour="steelblue")+
   geom_line(aes(x=fit1df$时间序号,y=fit1df$拟合值),colour="red",size=1)+
-  xlab("时间序号")+ylab("车流量")+scale_color_hue()+
+  #xlab("时间序号")+ylab("车流量")+scale_color_hue()+
+  scale_color_manual(values=c("steelblue","red"))+
+  xlab("Timestamp")+ylab("Traffic volume")+labs(color="Legend")+
   scale_x_continuous(breaks = seq(0,288,24),limits = c(0,288))+
   scale_y_continuous(breaks = seq(0,120,20))
 
-ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\ARIMA结果.jpg",width=7.29,height=4.5,dpi=600)
+#ggsave("D:\\王致远\\论文\\大论文\\实验\\绘图\\ARIMA结果.jpg",width=7.29,height=4.5,dpi=600)
 ```
 
+```{r}
+fit1df <- fit1df[,c(1,3,2)]
+#fit1df <- fit1df[,1:3]
+names(fit1df) <- c("Timestamp","real value","forecast value")
+fit1melt <- reshape2::melt(fit1df,id.vars="Timestamp")
+ggplot(fit1melt,aes(x=fit1melt$Timestamp,y=fit1melt$value,group=fit1melt$variable,color=fit1melt$variable))+
+  geom_line()+geom_point()+
+  scale_color_manual(values=c("steelblue","red"))+
+  xlab("Timestamp")+ylab("Traffic volume")+labs(color="Legend")+
+  scale_x_continuous(breaks = seq(0,288,24))+
+  scale_y_continuous(breaks = seq(0,120,20))+
+  theme_bw()
+```
+
+```{r eval=FALSE}
+ggsave(file="plot/05_arima.jpg",width=7.29,height=4.5,dpi=600)
+```
 ```{r}
 TFTSA::flow_evaluate(fit1df$机动车流量,fit1df$拟合值)
 ```
